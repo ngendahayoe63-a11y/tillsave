@@ -1,0 +1,43 @@
+{
+  "auth": {
+    "login": "Ingia",
+    "register": "Jisajili",
+    "phone": "Nambari ya Simu",
+    "email": "Barua pepe",
+    "password": "Nenosiri",
+    "name": "Jina Kamili",
+    "role_label": "Mimi ni...",
+    "role_member": "Mwanachama (Nataka kuweka akiba)",
+    "role_organizer": "Mratibu (Nasimamia kikundi)",
+    "continue": "Endelea",
+    "create_account": "Fungua Akaunti",
+    "welcome_back": "Karibu Tena",
+    "manage_groups": "Ingia kusimamia kikundi chako",
+    "no_account": "Huna akaunti?",
+    "register_here": "Jisajili hapa",
+    "already_have_account": "Una akaunti tayari?",
+    "secure_account": "Linda Akaunti Yako",
+    "create_pin": "Unda PIN",
+    "confirm_pin": "Thibitisha PIN",
+    "save_pin": "Hifadhi PIN & Anza"
+  },
+  "dashboard": {
+    "organizer_mode": "Modi ya Mratibu",
+    "member_mode": "Modi ya Mwanachama",
+    "my_groups": "Vikundi Vyangu",
+    "new_group": "Kikundi Kipya",
+    "join_group": "Jiunge na Kikundi",
+    "empty_organizer": "Bado hujaunda vikundi vyovyote.",
+    "empty_member": "Bado hauko kwenye kikundi chochote.",
+    "create_first": "Unda Kikundi Chako cha Kwanza",
+    "join_first": "Jiunge na Kikundi"
+  },
+  "common": {
+    "loading": "Inapakia...",
+    "back": "Nyuma",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "delete": "Futa",
+    "language": "Lugha"
+  }
+}

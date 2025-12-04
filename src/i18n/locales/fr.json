@@ -1,0 +1,43 @@
+{
+  "auth": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "phone": "Numéro de téléphone",
+    "email": "Adresse E-mail",
+    "password": "Mot de passe",
+    "name": "Nom complet",
+    "role_label": "Je suis...",
+    "role_member": "Membre (Je veux épargner)",
+    "role_organizer": "Organisateur (Je gère un groupe)",
+    "continue": "Continuer",
+    "create_account": "Créer un compte",
+    "welcome_back": "Bon retour",
+    "manage_groups": "Connectez-vous pour gérer votre groupe",
+    "no_account": "Pas de compte ?",
+    "register_here": "Inscrivez-vous ici",
+    "already_have_account": "Vous avez déjà un compte ?",
+    "secure_account": "Sécurisez votre compte",
+    "create_pin": "Créer un PIN",
+    "confirm_pin": "Confirmer le PIN",
+    "save_pin": "Enregistrer et Commencer"
+  },
+  "dashboard": {
+    "organizer_mode": "Mode Organisateur",
+    "member_mode": "Mode Membre",
+    "my_groups": "Mes Groupes",
+    "new_group": "Nouveau Groupe",
+    "join_group": "Rejoindre un Groupe",
+    "empty_organizer": "Vous n'avez pas encore créé de groupes.",
+    "empty_member": "Vous n'êtes dans aucun groupe d'épargne.",
+    "create_first": "Créer votre premier groupe",
+    "join_first": "Rejoindre un groupe"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "back": "Retour",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "language": "Langue"
+  }
+}
