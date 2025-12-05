@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from '@/router';
 import { useAuthStore } from '@/store/authStore';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { ToastProvider } from '@/components/ui/toast';
 import { PinLockScreen } from '@/components/auth/PinLockScreen'; // New Import
 import { Loader2 } from 'lucide-react';
 
@@ -53,11 +54,13 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="tillsave-theme">
-      {isLocked && isAuthenticated ? (
-        <PinLockScreen onUnlock={() => setIsLocked(false)} />
-      ) : (
-        <RouterProvider router={router} />
-      )}
+      <ToastProvider>
+        {isLocked && isAuthenticated ? (
+          <PinLockScreen onUnlock={() => setIsLocked(false)} />
+        ) : (
+          <RouterProvider router={router} />
+        )}
+      </ToastProvider>
     </ThemeProvider>
   );
 }

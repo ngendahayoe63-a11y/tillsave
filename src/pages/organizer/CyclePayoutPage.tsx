@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/toast';
 import { payoutService, PayoutItem } from '@/services/payoutService';
 import { groupsService } from '@/services/groupsService';
 import { generatePayoutPDF } from '@/utils/pdfGenerator';
@@ -11,10 +12,12 @@ import confetti from 'canvas-confetti'; // Import Confetti
 export const CyclePayoutPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isFinalized, setIsFinalized] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   const [groupName, setGroupName] = useState('');
   const [payoutItems, setPayoutItems] = useState<PayoutItem[]>([]);
@@ -54,9 +57,7 @@ export const CyclePayoutPage = () => {
 
   const handleFinalize = async () => {
     if (!groupId) return;
-    const confirm = window.confirm("Are you sure? This will lock the current calculations and record them permanently.");
-    if (!confirm) return;
-
+    
     setIsSaving(true);
     try {
       await payoutService.finalizePayout(groupId, payoutItems);
@@ -70,10 +71,20 @@ export const CyclePayoutPage = () => {
         colors: ['#16a34a', '#2563eb', '#facc15'] // Green, Blue, Yellow
       });
 
+      addToast({
+        type: 'success',
+        title: 'Payout finalized',
+        description: 'Cycle closed and all records saved successfully',
+      });
+
       // Auto download PDF on finalize
       generatePayoutPDF(groupName, payoutItems, totals.fees);
     } catch (error: any) {
-      alert("Failed to finalize: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to finalize',
+        description: error.message,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -174,12 +185,52 @@ export const CyclePayoutPage = () => {
           <Button variant="outline" className="flex-1" onClick={() => navigate(-1)}>
             Cancel
           </Button>
-          <Button className="flex-[2] bg-green-600 hover:bg-green-700 text-white" onClick={handleFinalize} disabled={isSaving}>
+          <Button className="flex-[2] bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowConfirmDialog(true)} disabled={isSaving}>
             {isSaving ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2 h-4 w-4" />}
             Finalize & Export PDF
           </Button>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-sm dark:bg-slate-900">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 dark:text-white">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                Confirm Finalization
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Are you sure you want to finalize this cycle? This will:
+              </p>
+              <ul className="text-sm space-y-2 text-gray-600 dark:text-gray-300 list-disc list-inside">
+                <li>Lock all calculations permanently</li>
+                <li>Record all member payouts</li>
+                <li>Close this cycle and start a new one</li>
+              </ul>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-200 dark:border-yellow-800">
+                <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                  ⚠️ This action cannot be undone
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setShowConfirmDialog(false)}>
+                  Cancel
+                </Button>
+                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => {
+                  setShowConfirmDialog(false);
+                  handleFinalize();
+                }}>
+                  Yes, Finalize
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

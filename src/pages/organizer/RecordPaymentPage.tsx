@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { currencyService } from '@/services/currencyService';
 import { paymentsService } from '@/services/paymentsService';
@@ -18,6 +19,7 @@ export const RecordPaymentPage = () => {
   const { groupId, membershipId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,11 +115,19 @@ export const RecordPaymentPage = () => {
         receiptFile || undefined // Pass file if exists
       );
       
-      alert("Payment Recorded Successfully!");
+      addToast({
+        type: 'success',
+        title: 'Payment recorded',
+        description: 'Payment has been saved successfully',
+      });
       navigate(-1);
       
     } catch (error: any) {
-      alert("Error: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to record payment',
+        description: error.message,
+      });
     } finally {
       setIsSubmitting(false);
     }

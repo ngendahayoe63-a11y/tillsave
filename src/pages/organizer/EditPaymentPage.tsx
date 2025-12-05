@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/toast';
 import { paymentsService } from '@/services/paymentsService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { Loader2, ArrowLeft, Save } from 'lucide-react';
 export const EditPaymentPage = () => {
   const { paymentId } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +34,11 @@ export const EditPaymentPage = () => {
         });
       } catch (error) {
         console.error(error);
-        alert("Payment not found");
+        addToast({
+          type: 'error',
+          title: 'Payment not found',
+          description: 'The payment you are trying to edit does not exist',
+        });
         navigate(-1);
       } finally {
         setIsLoading(false);
@@ -53,11 +59,19 @@ export const EditPaymentPage = () => {
         new Date(formData.date)
       );
       
-      alert("Payment Updated Successfully!");
+      addToast({
+        type: 'success',
+        title: 'Payment updated',
+        description: 'Payment has been updated successfully',
+      });
       navigate(-1);
       
     } catch (error: any) {
-      alert("Error: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to update',
+        description: error.message,
+      });
     } finally {
       setIsSubmitting(false);
     }

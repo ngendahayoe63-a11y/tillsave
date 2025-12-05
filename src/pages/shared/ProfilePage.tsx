@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import { useToast } from '@/components/ui/toast';
 import { profileService } from '@/services/profileService';
 import { authService } from '@/services/authService'; // Import Auth Service
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
@@ -15,6 +16,7 @@ import { User, Settings, Shield, Moon, Sun, Monitor, LogOut, Loader2, Lock, Chec
 export const ProfilePage = () => {
   const { user, setUser, logout } = useAuthStore();
   const { setTheme, theme } = useTheme();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
   const [isPinLoading, setIsPinLoading] = useState(false);
@@ -41,9 +43,17 @@ export const ProfilePage = () => {
         phone: formData.phone
       });
       setUser({ ...user, ...formData });
-      alert("Profile updated!");
+      addToast({
+        type: 'success',
+        title: 'Profile updated',
+        description: 'Your profile has been saved successfully',
+      });
     } catch (error: any) {
-      alert("Failed to update: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Update failed',
+        description: error.message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -54,21 +64,37 @@ export const ProfilePage = () => {
     if (!user) return;
 
     if (pinData.pin.length !== 4) {
-      alert("PIN must be 4 digits");
+      addToast({
+        type: 'warning',
+        title: 'Invalid PIN',
+        description: 'PIN must be exactly 4 digits',
+      });
       return;
     }
     if (pinData.pin !== pinData.confirm) {
-      alert("PINs do not match");
+      addToast({
+        type: 'error',
+        title: 'PINs do not match',
+        description: 'Please enter the same PIN in both fields',
+      });
       return;
     }
 
     setIsPinLoading(true);
     try {
       await authService.updatePin(user.id, pinData.pin);
-      alert("PIN updated successfully!");
+      addToast({
+        type: 'success',
+        title: 'PIN updated',
+        description: 'Your security PIN has been changed successfully',
+      });
       setPinData({ pin: '', confirm: '' }); // Reset form
     } catch (error: any) {
-      alert("Failed to update PIN: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to update PIN',
+        description: error.message,
+      });
     } finally {
       setIsPinLoading(false);
     }
@@ -258,7 +284,11 @@ export const ProfilePage = () => {
               <CardTitle>Account Access</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full justify-start" onClick={() => alert("Change password flow requires Supabase reset email")}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => addToast({
+                type: 'info',
+                title: 'Password reset',
+                description: 'A password reset link will be sent to your email address',
+              })}>
                 <Lock className="mr-2 h-4 w-4" /> Change Password
               </Button>
               

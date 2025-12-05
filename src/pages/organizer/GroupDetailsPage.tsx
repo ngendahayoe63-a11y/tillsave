@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ export const GroupDetailsPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { addToast } = useToast();
   
   const [group, setGroup] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
@@ -98,7 +100,12 @@ export const GroupDetailsPage = () => {
 
           <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => {
              navigator.clipboard.writeText(group.join_code);
-             alert("Code copied!");
+             addToast({
+               type: 'success',
+               title: 'Code copied',
+               description: `Join code ${group.join_code} copied to clipboard`,
+               duration: 2000,
+             });
           }}>
              {t('groups.invite')} +
           </Button>
@@ -145,7 +152,12 @@ export const GroupDetailsPage = () => {
                 actionLabel="Copy Invite Code"
                 onAction={() => {
                     navigator.clipboard.writeText(group.join_code);
-                    alert("Code copied!");
+                    addToast({
+                      type: 'success',
+                      title: 'Code copied',
+                      description: `Join code ${group.join_code} copied to clipboard`,
+                      duration: 2000,
+                    });
                 }}
                 />
             </div>

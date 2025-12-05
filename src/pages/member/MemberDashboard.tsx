@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, PiggyBank, Target, TrendingUp, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Plus, PiggyBank, Target, TrendingUp, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 
@@ -92,16 +92,15 @@ export const MemberDashboard = () => {
 
           {/* Right: Smart Alerts (1/3 width) */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Smart Alerts (2)</h3>
+            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Summary</h3>
             
-            <Card className="border-l-4 border-l-yellow-500 dark:bg-slate-900 border-t-0 border-r-0 border-b-0 shadow-sm">
+            <Card className="border-l-4 border-l-green-500 dark:bg-slate-900 border-t-0 border-r-0 border-b-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                  <TrendingUp className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-sm text-gray-900 dark:text-white">Goal at Risk</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">You are 5,000 RWF behind schedule for School Fees.</p>
-                    <Button variant="link" className="h-auto p-0 text-xs mt-2 text-yellow-600">See how to catch up →</Button>
+                    <p className="font-bold text-sm text-gray-900 dark:text-white">Total Contributions</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatTotalSaved()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -110,11 +109,10 @@ export const MemberDashboard = () => {
             <Card className="border-l-4 border-l-blue-500 dark:bg-slate-900 border-t-0 border-r-0 border-b-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <TrendingUp className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                  <PiggyBank className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-sm text-gray-900 dark:text-white">Streak Alert!</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pay today to keep your 15-day streak alive.</p>
-                    <Button size="sm" className="h-7 text-xs mt-2 w-full">Pay Now</Button>
+                    <p className="font-bold text-sm text-gray-900 dark:text-white">Active Goals</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{dashboardData?.goals?.length || 0} goals tracking</p>
                   </div>
                 </div>
               </CardContent>

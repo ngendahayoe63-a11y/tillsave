@@ -50,14 +50,14 @@ export const AdvancedReportPage = () => {
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4 border-b border-gray-200 dark:border-gray-800">
         <Button variant="ghost" size="icon" onClick={() => navigate('/organizer')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold">Group Insights</h1>
-          <p className="text-xs text-gray-500">{groupName} • {format(new Date(), 'MMMM yyyy')}</p>
+          <h1 className="text-lg font-bold dark:text-white">Group Insights</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{groupName} • {format(new Date(), 'MMMM yyyy')}</p>
         </div>
       </header>
 
@@ -98,48 +98,48 @@ export const AdvancedReportPage = () => {
 
         {/* --- EXISTING METRICS --- */}
         <div className="grid grid-cols-2 gap-4">
-          <Card>
+          <Card className="dark:bg-slate-900 border-0">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="bg-blue-100 p-2 rounded-full mb-2">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full mb-2">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <div className="text-2xl font-bold text-blue-700">{stats.completionRate}%</div>
-              <div className="text-xs text-gray-500">Participation Rate</div>
+              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.completionRate}%</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Participation Rate</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-slate-900 border-0">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="bg-red-100 p-2 rounded-full mb-2">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+              <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full mb-2">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
-              <div className="text-2xl font-bold text-red-700">{stats.missedPayments}</div>
-              <div className="text-xs text-gray-500">Missed Payments</div>
+              <div className="text-2xl font-bold text-red-700 dark:text-red-300">{stats.missedPayments}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Missed Payments</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Activity Chart */}
-        <Card>
+        <Card className="dark:bg-slate-900 border-0">
           <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 dark:text-white">
               <TrendingUp className="h-4 w-4" /> Daily Payment Activity
             </CardTitle>
           </CardHeader>
           <CardContent className="h-64 pl-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgb(107, 114, 128)" />
                 <XAxis 
                   dataKey="date" 
-                  tick={{fontSize: 10}} 
+                  tick={{fontSize: 10, fill: '#9CA3AF'}} 
                   interval={4}
-                  stroke="#888888"
+                  stroke="rgb(156, 163, 175)"
                 />
-                <YAxis allowDecimals={false} tick={{fontSize: 10}} stroke="#888888" />
+                <YAxis allowDecimals={false} tick={{fontSize: 10, fill: '#9CA3AF'}} stroke="rgb(156, 163, 175)" />
                 <Tooltip 
-                  cursor={{fill: '#f3f4f6'}}
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                  cursor={{fill: 'rgba(59, 130, 246, 0.1)'}}
+                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(31, 41, 55, 0.9)', color: '#fff'}}
                 />
                 <Bar dataKey="payments" fill="#2563eb" radius={[4, 4, 0, 0]} />
               </BarChart>

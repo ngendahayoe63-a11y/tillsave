@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupCard } from '@/components/groups/GroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, ArrowRight, Activity } from 'lucide-react';
+import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, Activity } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -68,9 +68,9 @@ export const OrganizerDashboard = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase">Total Members</p>
-                  <h3 className="text-2xl font-bold mt-1">{dashboardData?.totalMembers || 0}</h3>
-                  <p className="text-xs text-green-600 flex items-center mt-1">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Members</p>
+                  <h3 className="text-2xl font-bold mt-1 dark:text-white">{dashboardData?.totalMembers || 0}</h3>
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" /> Active
                   </p>
                 </div>
@@ -85,8 +85,8 @@ export const OrganizerDashboard = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase">Total Managed</p>
-                  <div className="mt-1 space-y-1">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Managed</p>
+                  <div className="mt-1 space-y-1 dark:text-white">
                     {renderCurrencyLine(dashboardData?.totalManaged)}
                   </div>
                 </div>
@@ -101,8 +101,8 @@ export const OrganizerDashboard = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase">Your Earnings</p>
-                  <div className="mt-1 space-y-1">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Your Earnings</p>
+                  <div className="mt-1 space-y-1 dark:text-white">
                     {renderCurrencyLine(dashboardData?.totalEarnings)}
                   </div>
                 </div>
@@ -117,9 +117,9 @@ export const OrganizerDashboard = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase">Actions Needed</p>
-                  <h3 className="text-2xl font-bold mt-1">2</h3>
-                  <p className="text-xs text-orange-600 mt-1">Payouts upcoming</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Active Cycles</p>
+                  <h3 className="text-2xl font-bold mt-1 dark:text-white">{dashboardData?.groups?.length || 0}</h3>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">In progress</p>
                 </div>
                 <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                   <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -186,48 +186,6 @@ export const OrganizerDashboard = () => {
                     <Activity className="mr-2 h-4 w-4 text-green-600" /> View Global Report
                   </Button>
                 </Link>
-              </CardContent>
-            </Card>
-
-            {/* Alerts Section */}
-            <Card className="dark:bg-slate-900 border-none shadow-md">
-              <CardHeader>
-                <CardTitle className="text-sm uppercase tracking-wider text-gray-500 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-orange-500" /> Attention Needed
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="p-3 bg-red-50 dark:bg-red-900/10 border-l-2 border-red-500 rounded-r text-sm">
-                  <p className="font-medium text-red-800 dark:text-red-300">3 Missed Payments</p>
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">Morning Savers • Today</p>
-                </div>
-                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/10 border-l-2 border-yellow-500 rounded-r text-sm">
-                  <p className="font-medium text-yellow-800 dark:text-yellow-300">Payout Due Soon</p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Weekend Warriors • 3 days</p>
-                </div>
-                <Button variant="ghost" size="sm" className="w-full text-xs">
-                  View All Alerts <ArrowRight className="ml-1 w-3 h-3" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity Feed (Mocked for UI) */}
-            <Card className="dark:bg-slate-900 border-none shadow-md">
-              <CardHeader>
-                <CardTitle className="text-sm uppercase tracking-wider text-gray-500">Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1,2,3].map((_, i) => (
-                    <div key={i} className="flex gap-3 items-start">
-                      <div className="w-2 h-2 mt-2 rounded-full bg-green-500 shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium dark:text-gray-200">Payment Received</p>
-                        <p className="text-xs text-gray-500">John paid 2,000 RWF • 5m ago</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </CardContent>
             </Card>
 

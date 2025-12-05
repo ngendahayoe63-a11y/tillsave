@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/components/ui/toast';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/shared/ProgressBar';
@@ -14,10 +15,16 @@ interface GroupCardProps {
 
 export const GroupCard: React.FC<GroupCardProps> = ({ group, role }) => {
   const { t } = useTranslation();
+  const { addToast } = useToast();
 
   const copyCode = () => {
     navigator.clipboard.writeText(group.join_code);
-    alert(`Code ${group.join_code} copied!`);
+    addToast({
+      type: 'success',
+      title: 'Code copied',
+      description: `Join code ${group.join_code} copied to clipboard`,
+      duration: 2000,
+    });
   };
 
   // Calculate Progress Logic directly here for Organizer View

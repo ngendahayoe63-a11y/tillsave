@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useToast } from '@/components/ui/toast';
 import { supabase } from '@/api/supabase';
 import { paymentsService } from '@/services/paymentsService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Pencil, Trash2, Calendar } from 'lucide-react';
+import { Loader2, ArrowLeft, Pencil, Trash2, Calendar, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const MemberLedgerPage = () => {
   const { groupId, membershipId } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(true);
   const [memberName, setMemberName] = useState('');
   const [payments, setPayments] = useState<any[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,14 +47,31 @@ export const MemberLedgerPage = () => {
   }, [membershipId]);
 
   const handleDelete = async (paymentId: string) => {
-    if (!confirm("Are you sure you want to delete this payment? This cannot be undone.")) return;
+    setDeletePaymentId(paymentId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletePaymentId) return;
     
     try {
-      await paymentsService.deletePayment(paymentId);
+      await paymentsService.deletePayment(deletePaymentId);
       // Remove from UI
-      setPayments(prev => prev.filter(p => p.id !== paymentId));
+      setPayments(prev => prev.filter(p => p.id !== deletePaymentId));
+      addToast({
+        type: 'success',
+        title: 'Payment deleted',
+        description: 'The payment has been removed',
+      });
     } catch (error: any) {
-      alert("Failed to delete: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to delete',
+        description: error.message,
+      });
+    } finally {
+      setShowDeleteDialog(false);
+      setDeletePaymentId(null);
     }
   };
 
@@ -113,6 +134,35 @@ export const MemberLedgerPage = () => {
           ))
         )}
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-sm dark:bg-slate-900">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <h2 className="text-lg font-bold dark:text-white">Delete Payment?</h2>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Are you sure you want to delete this payment? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setShowDeleteDialog(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white" 
+                  onClick={confirmDelete}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

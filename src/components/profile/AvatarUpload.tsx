@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useToast } from '@/components/ui/toast';
 import { profileService } from '@/services/profileService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Camera } from 'lucide-react';
@@ -12,6 +13,7 @@ interface AvatarUploadProps {
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({ url, name, size = 'lg' }) => {
   const { user, setUser } = useAuthStore();
+  const { addToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
 
   // Size classes
@@ -38,9 +40,18 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({ url, name, size = 'l
       // Update local state immediately
       setUser({ ...user, avatar_url: publicUrl });
       
+      addToast({
+        type: 'success',
+        title: 'Avatar uploaded',
+        description: 'Your profile picture has been updated',
+      });
     } catch (error) {
       console.error(error);
-      alert("Error uploading image");
+      addToast({
+        type: 'error',
+        title: 'Upload failed',
+        description: 'Failed to upload image. Please try again.',
+      });
     } finally {
       setIsUploading(false);
     }

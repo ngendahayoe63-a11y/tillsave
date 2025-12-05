@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'; // Import translation hook
+import { useToast } from '@/components/ui/toast';
 import { payoutService } from '@/services/payoutService';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ export const PayoutSummaryPage = () => {
   const { t } = useTranslation(); // Initialize translation
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(true);
   const [groupName, setGroupName] = useState('');
@@ -127,7 +129,11 @@ export const PayoutSummaryPage = () => {
           </div>
         </div>
 
-        <Button variant="outline" className="w-full" onClick={() => alert("PDF Export coming in Phase 2!")}>
+        <Button variant="outline" className="w-full" onClick={() => addToast({
+          type: 'info',
+          title: 'PDF Export',
+          description: 'PDF export feature coming in the next phase. Download as image for now.',
+        })}>
           <Download className="mr-2 h-4 w-4" /> Export Report (PDF)
         </Button>
 

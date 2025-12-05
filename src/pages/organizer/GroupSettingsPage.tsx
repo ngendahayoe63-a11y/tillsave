@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/toast';
 import { groupsService } from '@/services/groupsService';
 import { useGroupsStore } from '@/store/groupsStore';
 import { Button } from '@/components/ui/button';
@@ -11,10 +12,13 @@ import { Loader2, ArrowLeft, Save, Trash2, AlertTriangle } from 'lucide-react';
 export const GroupSettingsPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
   useGroupsStore(); // Access store for context
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [originalGroup, setOriginalGroup] = useState<any>(null);
   
   const [formData, setFormData] = useState({
@@ -34,7 +38,11 @@ export const GroupSettingsPage = () => {
         });
       } catch (error) {
         console.error(error);
-        alert("Group not found");
+        addToast({
+          type: 'error',
+          title: 'Group not found',
+          description: 'The group you are trying to edit does not exist',
+        });
         navigate('/organizer');
       } finally {
         setIsLoading(false);
@@ -55,32 +63,51 @@ export const GroupSettingsPage = () => {
         parseInt(formData.cycleDays)
       );
       
-      alert("Group Updated Successfully!");
+      addToast({
+        type: 'success',
+        title: 'Group updated',
+        description: 'Group settings have been saved',
+      });
       navigate(`/organizer/group/${groupId}`); // Go back to details
       
     } catch (error: any) {
-      alert("Error: " + error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to update',
+        description: error.message,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!groupId) return;
-    const confirmText = prompt(`To confirm deletion, type "${originalGroup.name}" below:\n\nWARNING: This will delete ALL payments and member records for this group forever.`);
-    
-    if (confirmText === originalGroup.name) {
-      setIsSubmitting(true);
-      try {
-        await groupsService.deleteGroup(groupId);
-        // Clean up and go home
-        navigate('/organizer');
-      } catch (error: any) {
-        alert("Failed to delete: " + error.message);
-        setIsSubmitting(false);
-      }
-    } else {
-        if(confirmText !== null) alert("Group name did not match. Deletion cancelled.");
+    if (!groupId || deleteConfirmText !== originalGroup.name) {
+      addToast({
+        type: 'error',
+        title: 'Confirmation failed',
+        description: 'Group name did not match. Deletion cancelled.',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await groupsService.deleteGroup(groupId);
+      addToast({
+        type: 'success',
+        title: 'Group deleted',
+        description: 'The group and all its records have been deleted',
+      });
+      // Clean up and go home
+      navigate('/organizer');
+    } catch (error: any) {
+      addToast({
+        type: 'error',
+        title: 'Failed to delete',
+        description: error.message,
+      });
+      setIsSubmitting(false);
     }
   };
 
@@ -135,26 +162,81 @@ export const GroupSettingsPage = () => {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800">
         <CardHeader>
-          <CardTitle className="text-red-600 flex items-center gap-2">
+          <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" /> Danger Zone
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CardDescription className="text-red-700 mb-4">
+          <CardDescription className="text-red-700 dark:text-red-300 mb-4">
             Deleting this group will remove all data permanently. This action cannot be undone.
           </CardDescription>
           <Button 
             variant="destructive" 
             className="w-full bg-red-600 hover:bg-red-700" 
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={isSubmitting}
           >
             <Trash2 className="mr-2 h-4 w-4" /> Delete Group
           </Button>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-sm dark:bg-slate-900">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 dark:text-white text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                Delete Group?
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                This will permanently delete <strong>{originalGroup.name}</strong> and all its:
+              </p>
+              <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-300 list-disc list-inside">
+                <li>Member records</li>
+                <li>Payment history</li>
+                <li>Cycle data</li>
+                <li>All associated information</li>
+              </ul>
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-800">
+                <p className="text-xs text-red-800 dark:text-red-300 mb-2">
+                  Type the group name to confirm:
+                </p>
+                <Input 
+                  placeholder={originalGroup.name}
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className="dark:bg-slate-800 dark:border-gray-700"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => {
+                  setShowDeleteDialog(false);
+                  setDeleteConfirmText('');
+                }}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white" 
+                  onClick={() => {
+                    handleDelete();
+                    setShowDeleteDialog(false);
+                  }}
+                  disabled={deleteConfirmText !== originalGroup.name || isSubmitting}
+                >
+                  {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                  Delete Permanently
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
