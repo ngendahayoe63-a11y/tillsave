@@ -1,48 +1,40 @@
-import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { analyticsService } from '@/services/analyticsService';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, PiggyBank, Target, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, PiggyBank, Target, TrendingUp, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useMemberDashboard } from '@/hooks/useDashboard';
 
 export const MemberDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  
-  const [portfolio, setPortfolio] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (user) {
-        try {
-          const data = await analyticsService.getMemberPortfolio(user.id);
-          setPortfolio(data);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    loadData();
-  }, [user]);
-
-  // Aggregate Stats for Top Cards (Simple sum for MVP display)
-  const totalSaved = portfolio.reduce((acc, curr) => {
-    curr.financials.forEach((f: any) => {
-        if(f.currency === 'RWF') acc += f.saved; 
-    });
-    return acc;
-  }, 0);
+  const { data: dashboardData, isLoading, error } = useMemberDashboard(user?.id);
 
   if (isLoading) return <DashboardSkeleton />;
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <EmptyState 
+          icon={AlertCircle}
+          title="Error Loading Dashboard"
+          description={error instanceof Error ? error.message : "Failed to load dashboard data"}
+        />
+      </div>
+    );
+  }
+
+  // Format total saved by currency
+  const formatTotalSaved = () => {
+    if (!dashboardData?.totalSaved) return "0 RWF";
+    const entries = Object.entries(dashboardData.totalSaved);
+    if (entries.length === 0) return "0 RWF";
+    return entries.map(([curr, val]) => `${(val as number).toLocaleString()} ${curr}`).join(' + ');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
@@ -64,11 +56,11 @@ export const MemberDashboard = () => {
                   <svg className="w-24 h-24 transform -rotate-90">
                     {/* Background Circle */}
                     <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-200 dark:text-slate-700" />
-                    {/* Progress Circle (82% filled) */}
-                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - 82/100)} className="text-green-500" />
+                    {/* Progress Circle */}
+                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - (dashboardData?.healthScore || 0)/100)} className="text-green-500" />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className="text-xl font-bold dark:text-white">82</span>
+                    <span className="text-xl font-bold dark:text-white">{dashboardData?.healthScore || 0}</span>
                     <span className="text-[10px] text-gray-500">SCORE</span>
                   </div>
                 </div>
@@ -83,15 +75,15 @@ export const MemberDashboard = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-gray-500 uppercase font-semibold">Streak</p>
-                    <p className="text-gray-900 dark:text-white font-bold">15 Days 🔥</p>
+                    <p className="text-gray-900 dark:text-white font-bold">{dashboardData?.streakDays || 0} Days 🔥</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-gray-500 uppercase font-semibold">Total Saved</p>
-                    <p className="text-gray-900 dark:text-white font-bold">{totalSaved.toLocaleString()} RWF</p>
+                    <p className="text-gray-900 dark:text-white font-bold">{formatTotalSaved()}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Next Payout</p>
-                    <p className="text-blue-600 font-bold">In 2 days</p>
+                    <p className="text-xs text-gray-500 uppercase font-semibold">Days Paid</p>
+                    <p className="text-blue-600 font-bold">{dashboardData?.daysPaid || 0} days</p>
                   </div>
                 </div>
               </div>
@@ -148,16 +140,29 @@ export const MemberDashboard = () => {
                       <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
-                      <p className="font-bold text-sm dark:text-white">School Fees</p>
-                      <p className="text-xs text-gray-500">By June 2025</p>
+                      <p className="font-bold text-sm dark:text-white">{dashboardData?.goals?.[0]?.name || 'No Goals'}</p>
+                      <p className="text-xs text-gray-500">{dashboardData?.goals?.[0]?.target_date ? `By ${new Date(dashboardData.goals[0].target_date).toLocaleDateString()}` : 'No deadline'}</p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/50 px-2 py-1 rounded">65%</span>
+                  {dashboardData?.goals?.[0] && (
+                    <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/50 px-2 py-1 rounded">
+                      {Math.round((dashboardData.goals[0].current_amount / dashboardData.goals[0].target_amount) * 100)}%
+                    </span>
+                  )}
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden mb-2">
-                  <div className="bg-purple-500 h-full w-[65%]"></div>
-                </div>
-                <p className="text-xs text-gray-500">195,000 / 300,000 RWF</p>
+                {dashboardData?.goals?.[0] && (
+                  <>
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden mb-2">
+                      <div 
+                        className="bg-purple-500 h-full" 
+                        style={{ width: `${Math.min((dashboardData.goals[0].current_amount / dashboardData.goals[0].target_amount) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {dashboardData.goals[0].current_amount.toLocaleString()} / {dashboardData.goals[0].target_amount.toLocaleString()} {dashboardData.goals[0].currency}
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -166,7 +171,7 @@ export const MemberDashboard = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-bold dark:text-white">{t('dashboard.my_groups')}</h2>
-              {portfolio.length > 0 && (
+              {dashboardData?.memberships && dashboardData.memberships.length > 0 && (
                 <Link to="/member/join-group">
                   <Button size="sm" variant="outline" className="gap-2">
                     <Plus className="h-4 w-4" /> {t('dashboard.join_group')}
@@ -175,10 +180,10 @@ export const MemberDashboard = () => {
               )}
             </div>
 
-            {portfolio.length > 0 ? (
+            {dashboardData?.memberships && dashboardData.memberships.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {portfolio.map((item) => (
-                  <MemberGroupCard key={item.group.id} data={item} />
+                {dashboardData.memberships.map((membership: any) => (
+                  <MemberGroupCard key={membership.id} data={membership} />
                 ))}
               </div>
             ) : (

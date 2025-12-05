@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { useGroupsStore } from '@/store/groupsStore';
-import { analyticsService } from '@/services/analyticsService';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,25 +9,14 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, ArrowRight, Activity } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
+import { useState } from 'react';
+import { useOrganizerDashboard } from '@/hooks/useDashboard';
 
 export const OrganizerDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { groups, fetchGroups, isLoading: groupsLoading } = useGroupsStore();
-  
-  const [globalStats, setGlobalStats] = useState<any>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const { data: dashboardData, isLoading, error } = useOrganizerDashboard(user?.id);
   const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      fetchGroups(user.id, 'ORGANIZER');
-      analyticsService.getGlobalOrganizerStats(user.id)
-        .then(data => setGlobalStats(data))
-        .catch(err => console.error(err))
-        .finally(() => setStatsLoading(false));
-    }
-  }, [user, fetchGroups]);
 
   // Helper to render currencies
   const renderCurrencyLine = (data: Record<string, number> | undefined) => {
@@ -43,9 +29,20 @@ export const OrganizerDashboard = () => {
     ));
   };
 
-  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredGroups = (dashboardData?.groups || []).filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  if (groupsLoading || statsLoading) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton />;
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <EmptyState 
+          icon={AlertCircle}
+          title="Error Loading Dashboard"
+          description={error instanceof Error ? error.message : "Failed to load dashboard data"}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
@@ -59,7 +56,7 @@ export const OrganizerDashboard = () => {
           <div className="relative z-10">
             <h1 className="text-2xl font-bold mb-2">👋 Welcome back, {user?.name.split(' ')[0]}!</h1>
             <p className="text-blue-100 text-sm max-w-xl">
-              It's {format(new Date(), 'MMMM do, yyyy')}. You are managing <strong>{groups.length} groups</strong> with <strong>{globalStats?.totalMembers} members</strong>. 
+              It's {format(new Date(), 'MMMM do, yyyy')}. You are managing <strong>{dashboardData?.groups?.length || 0} groups</strong> with <strong>{dashboardData?.totalMembers || 0} members</strong>. 
               <span className="hidden sm:inline"> Everything looks stable today.</span>
             </p>
           </div>
@@ -72,7 +69,7 @@ export const OrganizerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase">Total Members</p>
-                  <h3 className="text-2xl font-bold mt-1">{globalStats?.totalMembers}</h3>
+                  <h3 className="text-2xl font-bold mt-1">{dashboardData?.totalMembers || 0}</h3>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" /> Active
                   </p>
@@ -90,7 +87,7 @@ export const OrganizerDashboard = () => {
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase">Total Managed</p>
                   <div className="mt-1 space-y-1">
-                    {renderCurrencyLine(globalStats?.totalManaged)}
+                    {renderCurrencyLine(dashboardData?.totalManaged)}
                   </div>
                 </div>
                 <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -106,7 +103,7 @@ export const OrganizerDashboard = () => {
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase">Your Earnings</p>
                   <div className="mt-1 space-y-1">
-                    {renderCurrencyLine(globalStats?.totalEarnings)}
+                    {renderCurrencyLine(dashboardData?.totalEarnings)}
                   </div>
                 </div>
                 <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
