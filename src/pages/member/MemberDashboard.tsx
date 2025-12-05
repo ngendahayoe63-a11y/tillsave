@@ -146,7 +146,7 @@ export const MemberDashboard = () => {
                   </div>
                   {dashboardData?.goals?.[0] && (
                     <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/50 px-2 py-1 rounded">
-                      {Math.round((dashboardData.goals[0].current_amount / dashboardData.goals[0].target_amount) * 100)}%
+                      {Math.round((dashboardData.goals[0].current_progress / dashboardData.goals[0].target_amount) * 100)}%
                     </span>
                   )}
                 </div>
@@ -155,11 +155,11 @@ export const MemberDashboard = () => {
                     <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden mb-2">
                       <div 
                         className="bg-purple-500 h-full" 
-                        style={{ width: `${Math.min((dashboardData.goals[0].current_amount / dashboardData.goals[0].target_amount) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((dashboardData.goals[0].current_progress / dashboardData.goals[0].target_amount) * 100, 100)}%` }}
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500">
-                      {dashboardData.goals[0].current_amount.toLocaleString()} / {dashboardData.goals[0].target_amount.toLocaleString()} {dashboardData.goals[0].currency}
+                      {dashboardData.goals[0].current_progress.toLocaleString()} / {dashboardData.goals[0].target_amount.toLocaleString()} {dashboardData.goals[0].currency}
                     </p>
                   </>
                 )}

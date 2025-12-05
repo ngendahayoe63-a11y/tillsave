@@ -179,7 +179,7 @@ export const dashboardService = {
       // 3. Get member's active goals
       const { data: goals, error: goalsError } = await supabase
         .from('goals')
-        .select('id, name, target_amount, current_amount, target_date, currency, status')
+        .select('id, name, target_amount, current_progress, target_date, currency, status')
         .eq('user_id', userId)
         .eq('status', 'ACTIVE');
 
