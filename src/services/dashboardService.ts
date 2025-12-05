@@ -89,15 +89,32 @@ export const dashboardService = {
       if (paymentsError) throw paymentsError;
 
       // 5. Get top performers
-      const { data: topPerformers, error: topError } = await supabase
+      const { data: allPayments, error: topError } = await supabase
         .from('payments')
-        .select('memberships(users(id, name)), COUNT(*) as payment_count, SUM(amount) as total')
+        .select('id, amount, currency, payment_date, memberships(user_id, users(id, name))')
         .in('group_id', groupIds)
-        .gte('payment_date', monthStart.toISOString())
-        .order('total', { ascending: false })
-        .limit(5);
+        .gte('payment_date', monthStart.toISOString());
 
       if (topError) throw topError;
+
+      // Calculate top performers from payments
+      const performerMap: Record<string, { user: any; count: number; total: number }> = {};
+      allPayments?.forEach((payment: any) => {
+        const userId = payment.memberships?.user_id;
+        const userName = payment.memberships?.users?.name;
+        if (userId) {
+          if (!performerMap[userId]) {
+            performerMap[userId] = { user: { id: userId, name: userName }, count: 0, total: 0 };
+          }
+          performerMap[userId].count += 1;
+          performerMap[userId].total += payment.amount || 0;
+        }
+      });
+
+      const topPerformers = Object.values(performerMap)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5)
+        .map(p => ({ users: p.user, payment_count: p.count, total: p.total }));
 
       // 6. Calculate totals
       const totalMembers = memberships?.length || 0;
