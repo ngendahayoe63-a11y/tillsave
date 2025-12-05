@@ -45,16 +45,22 @@ export const MemberGroupCard: React.FC<MemberGroupCardProps> = ({ data }) => {
               <div key={fin.currency} className="flex flex-col gap-1 border-b border-blue-100 dark:border-blue-800 last:border-0 pb-2 last:pb-0">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-blue-900 dark:text-blue-100">{fin.currency}</span>
-                  <span className="font-bold text-lg text-green-700 dark:text-green-400">{fin.net.toLocaleString()}</span>
+                  {/* Show net only on last day, otherwise show saved amount */}
+                  <span className="font-bold text-lg text-green-700 dark:text-green-400">
+                    {cycle.daysRemaining <= 1 ? fin.net.toLocaleString() : fin.saved.toLocaleString()}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                   <span className="flex items-center gap-1">
                     <PiggyBank className="w-3 h-3" /> Saved: {fin.saved.toLocaleString()}
                   </span>
-                  <span className="flex items-center gap-1 text-red-400 dark:text-red-300">
-                    <Receipt className="w-3 h-3" /> Fee: -{fin.fee.toLocaleString()}
-                  </span>
+                  {/* Only show fee on last day of cycle */}
+                  {cycle.daysRemaining <= 1 && (
+                    <span className="flex items-center gap-1 text-red-400 dark:text-red-300">
+                      <Receipt className="w-3 h-3" /> Fee: -{fin.fee.toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
             ))
