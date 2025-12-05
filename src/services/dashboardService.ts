@@ -51,7 +51,13 @@ export const dashboardService = {
       // 2. Get member count and details
       const { data: memberships, error: membershipsError } = await supabase
         .from('memberships')
-        .select('id, group_id, user_id, daily_rate, currency, status')
+        .select(`
+          id, 
+          group_id, 
+          user_id, 
+          status,
+          users:user_id (id, name)
+        `)
         .in('group_id', groupIds)
         .eq('status', 'ACTIVE');
 
@@ -132,7 +138,11 @@ export const dashboardService = {
       const { data: memberships, error: membershipsError } = await supabase
         .from('memberships')
         .select(`
-          id, group_id, user_id, daily_rate, currency, status,
+          id, 
+          group_id, 
+          user_id, 
+          status,
+          joined_at,
           groups(id, name, organizer_id, current_cycle_start_date, cycle_days)
         `)
         .eq('user_id', userId)
@@ -224,7 +234,7 @@ export const dashboardService = {
 
       const { data: memberships, error: membershipsError } = await supabase
         .from('memberships')
-        .select('id, user_id, daily_rate, currency')
+        .select('id, user_id, status')
         .eq('group_id', groupId)
         .eq('status', 'ACTIVE');
 
