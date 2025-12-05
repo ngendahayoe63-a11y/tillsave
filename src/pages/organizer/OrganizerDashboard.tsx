@@ -181,9 +181,11 @@ export const OrganizerDashboard = () => {
                     <Plus className="mr-2 h-4 w-4 text-primary" /> {t('dashboard.new_group')}
                   </Button>
                 </Link>
-                <Button className="w-full justify-start" variant="outline" disabled>
-                  <Activity className="mr-2 h-4 w-4 text-green-600" /> View Global Report
-                </Button>
+                <Link to="/organizer/global-report">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Activity className="mr-2 h-4 w-4 text-green-600" /> View Global Report
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
