@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, PiggyBank, Target, TrendingUp, AlertTriangle, AlertCircle, Users } from 'lucide-react';
+import { Plus, PiggyBank, Target, TrendingUp, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 
@@ -169,21 +169,14 @@ export const MemberDashboard = () => {
 
           {/* My Groups (Right 2/3) */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center gap-2">
+            <div className="flex justify-between items-center">
               <h2 className="text-lg font-bold dark:text-white">{t('dashboard.my_groups')}</h2>
               {dashboardData?.memberships && dashboardData.memberships.length > 0 && (
-                <div className="flex gap-2">
-                  <Link to="/member/browse-groups">
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <Users className="h-4 w-4" /> Browse
-                    </Button>
-                  </Link>
-                  <Link to="/member/join-group">
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <Plus className="h-4 w-4" /> {t('dashboard.join_group')}
-                    </Button>
-                  </Link>
-                </div>
+                <Link to="/member/join-group">
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" /> {t('dashboard.join_group')}
+                  </Button>
+                </Link>
               )}
             </div>
 

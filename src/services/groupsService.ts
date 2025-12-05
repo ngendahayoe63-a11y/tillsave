@@ -206,44 +206,5 @@ export const groupsService = {
 
     if (error) throw error;
     return data;
-  },
-
-  /**
-   * Get all active groups (for discovery/browse)
-   */
-  getAllActiveGroups: async () => {
-    const { data, error } = await supabase
-      .from('groups')
-      .select(`
-        id,
-        name,
-        description,
-        join_code,
-        cycle_days,
-        current_cycle,
-        status,
-        current_cycle_start_date,
-        organizer_id,
-        users:organizer_id(name, avatar_url)
-      `)
-      .eq('status', 'ACTIVE')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  },
-
-  /**
-   * Get member's joined groups (for filtering from browse)
-   */
-  getMemberJoinedGroupIds: async (userId: string) => {
-    const { data, error } = await supabase
-      .from('memberships')
-      .select('group_id')
-      .eq('user_id', userId)
-      .eq('status', 'ACTIVE');
-
-    if (error) throw error;
-    return (data || []).map(m => m.group_id);
   }
 };

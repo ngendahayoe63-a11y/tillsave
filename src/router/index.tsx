@@ -5,7 +5,7 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { UpdatePasswordPage } from '@/pages/auth/UpdatePasswordPage';
 import { OTPVerificationPage } from '@/pages/auth/OTPVerificationPage';
 import { SetupPINPage } from '@/pages/auth/SetupPINPage';
-import { OnboardingPage } from '@/pages/shared/OnboardingPage'; // New Import
+import { OnboardingPage } from '@/pages/shared/OnboardingPage';
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CreateGroupPage } from '@/pages/organizer/CreateGroupPage';
 import { GroupDetailsPage } from '@/pages/organizer/GroupDetailsPage';
@@ -18,7 +18,6 @@ import { CyclePayoutPage } from '@/pages/organizer/CyclePayoutPage';
 import { AdvancedReportPage } from '@/pages/organizer/AdvancedReportPage';
 import { GlobalReportPage } from '@/pages/organizer/GlobalReportPage';
 import { MemberDashboard } from '@/pages/member/MemberDashboard';
-import { BrowseGroupsPage } from '@/pages/member/BrowseGroupsPage';
 import { JoinGroupPage } from '@/pages/member/JoinGroupPage';
 import { SetupCurrenciesPage } from '@/pages/member/SetupCurrenciesPage';
 import { PaymentHistoryPage } from '@/pages/member/PaymentHistoryPage';
@@ -102,7 +101,6 @@ export const router = createBrowserRouter([
             path: 'member',
             children: [
               { index: true, element: <MemberDashboard /> },
-              { path: 'browse-groups', element: <BrowseGroupsPage /> },
               { path: 'join-group', element: <JoinGroupPage /> },
               { path: 'group/:groupId/setup', element: <SetupCurrenciesPage /> },
               { path: 'group/:groupId/history', element: <PaymentHistoryPage /> },
