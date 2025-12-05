@@ -29,7 +29,7 @@ export const dashboardService = {
       // 1. Get all organizer's active groups
       const { data: groups, error: groupsError } = await supabase
         .from('groups')
-        .select('id, name, status, current_cycle_start_date, cycle_days, organizer_id')
+        .select('id, name, status, current_cycle_start_date, cycle_days, organizer_id, join_code, current_cycle')
         .eq('organizer_id', organizerId)
         .eq('status', 'ACTIVE');
 

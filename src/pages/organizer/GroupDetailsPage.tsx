@@ -42,10 +42,11 @@ export const GroupDetailsPage = () => {
     loadData();
   }, [groupId, user]);
 
-  // Filter Members
+  // Filter Members - exclude organizer from regular members list
   const filteredMembers = members.filter(member => {
       const name = member.users?.name || '';
-      return name.toLowerCase().includes(searchTerm.toLowerCase());
+      const isNotOrganizer = !organizerMembership || member.id !== organizerMembership.id;
+      return name.toLowerCase().includes(searchTerm.toLowerCase()) && isNotOrganizer;
   });
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
