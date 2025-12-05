@@ -18,6 +18,7 @@ import { CyclePayoutPage } from '@/pages/organizer/CyclePayoutPage';
 import { AdvancedReportPage } from '@/pages/organizer/AdvancedReportPage';
 import { GlobalReportPage } from '@/pages/organizer/GlobalReportPage';
 import { MemberDashboard } from '@/pages/member/MemberDashboard';
+import { BrowseGroupsPage } from '@/pages/member/BrowseGroupsPage';
 import { JoinGroupPage } from '@/pages/member/JoinGroupPage';
 import { SetupCurrenciesPage } from '@/pages/member/SetupCurrenciesPage';
 import { PaymentHistoryPage } from '@/pages/member/PaymentHistoryPage';
@@ -101,6 +102,7 @@ export const router = createBrowserRouter([
             path: 'member',
             children: [
               { index: true, element: <MemberDashboard /> },
+              { path: 'browse-groups', element: <BrowseGroupsPage /> },
               { path: 'join-group', element: <JoinGroupPage /> },
               { path: 'group/:groupId/setup', element: <SetupCurrenciesPage /> },
               { path: 'group/:groupId/history', element: <PaymentHistoryPage /> },

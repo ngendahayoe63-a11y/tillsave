@@ -57,6 +57,13 @@ export const RecordPaymentPage = () => {
             currency: rates[0].currency,
             amount: rates[0].daily_rate.toString()
           }));
+        } else {
+          // If no rates, set default currency to RWF
+          setFormData(prev => ({
+            ...prev,
+            currency: 'RWF',
+            amount: ''
+          }));
         }
 
       } catch (error) {
@@ -73,7 +80,7 @@ export const RecordPaymentPage = () => {
     setFormData({
       ...formData,
       currency: value,
-      amount: rate ? rate.daily_rate.toString() : ''
+      amount: rate ? rate.daily_rate.toString() : formData.amount // Keep existing amount if no rate found
     });
   };
 
@@ -132,15 +139,11 @@ export const RecordPaymentPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {activeRates.length === 0 ? (
-            <div className="text-center p-4 bg-yellow-50 text-yellow-800 rounded">
-              <p>This member has not set up their currencies yet.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
-              <div className="space-y-2">
-                <Label>{t('payments.currency_label')}</Label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div className="space-y-2">
+              <Label>{t('payments.currency_label')}</Label>
+              {activeRates.length > 0 ? (
                 <Select 
                   value={formData.currency} 
                   onValueChange={handleCurrencyChange}
@@ -156,63 +159,80 @@ export const RecordPaymentPage = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              ) : (
+                // Allow manual currency selection if no rates set
+                <Select 
+                  value={formData.currency} 
+                  onValueChange={(value) => setFormData({...formData, currency: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="RWF">RWF (Rwandan Franc)</SelectItem>
+                    <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                    <SelectItem value="KES">KES (Kenyan Shilling)</SelectItem>
+                    <SelectItem value="UGX">UGX (Ugandan Shilling)</SelectItem>
+                    <SelectItem value="TZS">TZS (Tanzanian Shilling)</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="amount">{t('payments.amount_label')}</Label>
-                <Input 
-                  id="amount" 
-                  type="number" 
-                  value={formData.amount}
-                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  className="text-lg font-bold"
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">{t('payments.amount_label')}</Label>
+              <Input 
+                id="amount" 
+                type="number" 
+                value={formData.amount}
+                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                className="text-lg font-bold"
+                required
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="date">{t('payments.date_label')}</Label>
-                <Input 
-                  id="date" 
-                  type="date" 
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">{t('payments.date_label')}</Label>
+              <Input 
+                id="date" 
+                type="date" 
+                value={formData.date}
+                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                required
+              />
+            </div>
 
-              {/* RECEIPT UPLOAD SECTION */}
-              <div className="space-y-2">
-                <Label>Proof of Payment (Optional)</Label>
-                
-                {!previewUrl ? (
-                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Camera className="w-6 h-6 text-gray-400 mb-1" />
-                      <p className="text-xs text-gray-500">Take photo or upload receipt</p>
-                    </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                  </label>
-                ) : (
-                  <div className="relative h-40 w-full rounded-lg overflow-hidden border border-gray-200">
-                    <img src={previewUrl} alt="Receipt preview" className="h-full w-full object-cover" />
-                    <button 
-                      type="button"
-                      onClick={clearFile}
-                      className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+            {/* RECEIPT UPLOAD SECTION */}
+            <div className="space-y-2">
+              <Label>Proof of Payment (Optional)</Label>
+              
+              {!previewUrl ? (
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Camera className="w-6 h-6 text-gray-400 mb-1" />
+                    <p className="text-xs text-gray-500">Take photo or upload receipt</p>
                   </div>
-                )}
-              </div>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                </label>
+              ) : (
+                <div className="relative h-40 w-full rounded-lg overflow-hidden border border-gray-200">
+                  <img src={previewUrl} alt="Receipt preview" className="h-full w-full object-cover" />
+                  <button 
+                    type="button"
+                    onClick={clearFile}
+                    className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
 
-              <Button type="submit" className="w-full h-12 text-lg bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" /> : <CheckCircle className="mr-2 h-5 w-5" />}
-                {t('payments.confirm_btn')}
-              </Button>
-            </form>
-          )}
+            <Button type="submit" className="w-full h-12 text-lg bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin" /> : <CheckCircle className="mr-2 h-5 w-5" />}
+              {t('payments.confirm_btn')}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
