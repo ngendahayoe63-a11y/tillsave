@@ -63,7 +63,7 @@ export const GroupDetailsPage = () => {
             </Button>
             <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{group.name}</h1>
-            <p className="text-xs text-gray-500">{t('groups.cycle')} {group.current_cycle} • {members.length + (organizerMembership ? 1 : 0)} {t('groups.members_count')}</p>
+            <p className="text-xs text-gray-500">{t('groups.cycle')} {group.current_cycle} • {members.length} {t('groups.members_count')}</p>
             </div>
         </div>
         
