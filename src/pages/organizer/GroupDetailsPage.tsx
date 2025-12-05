@@ -1,33 +1,38 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/store/authStore';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Loader2, ArrowLeft, History, PlusCircle, Settings, UserPlus, Search, Clock } from 'lucide-react';
+import { Loader2, ArrowLeft, History, PlusCircle, Settings, UserPlus, Search, Clock, Crown } from 'lucide-react';
 
 export const GroupDetailsPage = () => {
   const { t } = useTranslation();
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   
   const [group, setGroup] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
+  const [organizerMembership, setOrganizerMembership] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(''); 
 
   useEffect(() => {
     const loadData = async () => {
-      if (!groupId) return;
+      if (!groupId || !user) return;
       try {
-        const [groupData, membersData] = await Promise.all([
+        const [groupData, membersData, orgMembership] = await Promise.all([
           groupsService.getGroupDetails(groupId),
-          groupsService.getGroupMembers(groupId)
+          groupsService.getGroupMembers(groupId),
+          groupsService.getOrganizerMembership(groupId, user.id)
         ]);
         setGroup(groupData);
         setMembers(membersData);
+        setOrganizerMembership(orgMembership);
       } catch (error) {
         console.error(error);
       } finally {
@@ -35,7 +40,7 @@ export const GroupDetailsPage = () => {
       }
     };
     loadData();
-  }, [groupId]);
+  }, [groupId, user]);
 
   // Filter Members
   const filteredMembers = members.filter(member => {
@@ -57,7 +62,7 @@ export const GroupDetailsPage = () => {
             </Button>
             <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{group.name}</h1>
-            <p className="text-xs text-gray-500">{t('groups.cycle')} {group.current_cycle} • {members.length} {t('groups.members_count')}</p>
+            <p className="text-xs text-gray-500">{t('groups.cycle')} {group.current_cycle} • {members.length + (organizerMembership ? 1 : 0)} {t('groups.members_count')}</p>
             </div>
         </div>
         
@@ -100,7 +105,37 @@ export const GroupDetailsPage = () => {
 
         {/* Member Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {members.length === 0 ? (
+          {/* Show Organizer First (if they're a member) */}
+          {organizerMembership && user && (
+            <Card className="hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors dark:bg-slate-900 dark:border-gray-800 border-purple-200 dark:border-purple-900">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                  <Crown className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold truncate text-gray-900 dark:text-gray-100">{user.name}</h3>
+                  <p className="text-xs text-purple-600 dark:text-purple-400">Organizer</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Link to={`/organizer/group/${groupId}/history/${organizerMembership.id}`}>
+                    <Button variant="outline" size="icon" className="h-9 w-9">
+                      <History className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to={`/organizer/group/${groupId}/pay/${organizerMembership.id}`}>
+                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                      <PlusCircle className="h-4 w-4 mr-1" /> {t('common.pay')}
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Other Members */}
+          {members.length === 0 && !organizerMembership ? (
             <div className="col-span-full">
                 <EmptyState
                 icon={UserPlus}

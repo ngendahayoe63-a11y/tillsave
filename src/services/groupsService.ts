@@ -7,7 +7,7 @@ const generateJoinCode = () => {
 
 export const groupsService = {
   /**
-   * Create a new Savings Group
+   * Create a new Savings Group (organizer is automatically added as a member)
    */
   createGroup: async (organizerId: string, name: string, cycleDays: number = 30) => {
     let joinCode = generateJoinCode();
@@ -38,6 +38,22 @@ export const groupsService = {
       .single();
 
     if (error) throw error;
+
+    // Automatically add organizer as a member so they can save
+    try {
+      await supabase
+        .from('memberships')
+        .insert({
+          group_id: group.id,
+          user_id: organizerId,
+          status: 'ACTIVE',
+          joined_at: new Date().toISOString()
+        });
+    } catch (memberError) {
+      console.error('Error adding organizer as member:', memberError);
+      // Continue anyway - group was created successfully
+    }
+
     return group;
   },
 
@@ -148,6 +164,45 @@ export const groupsService = {
       `)
       .eq('group_id', groupId)
       .eq('status', 'ACTIVE');
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Check if organizer has a membership in a group
+   */
+  getOrganizerMembership: async (groupId: string, organizerId: string) => {
+    const { data, error } = await supabase
+      .from('memberships')
+      .select('id, status, joined_at')
+      .eq('group_id', groupId)
+      .eq('user_id', organizerId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+    return data || null;
+  },
+
+  /**
+   * Create organizer membership in a group (if not exists)
+   */
+  addOrganizerToGroup: async (groupId: string, organizerId: string) => {
+    // Check if already a member
+    const existing = await groupsService.getOrganizerMembership(groupId, organizerId);
+    if (existing) return existing;
+
+    // Add organizer as member
+    const { data, error } = await supabase
+      .from('memberships')
+      .insert({
+        group_id: groupId,
+        user_id: organizerId,
+        status: 'ACTIVE',
+        joined_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
     if (error) throw error;
     return data;
