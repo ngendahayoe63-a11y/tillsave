@@ -14,11 +14,11 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, daysRemainin
 
   return (
     <div className="w-full space-y-1">
-      <div className="flex justify-between text-xs font-medium text-gray-500">
+      <div className="flex justify-between text-xs font-medium text-gray-500 dark:text-gray-400">
         <span>{label || "Cycle Progress"}</span>
         <span>{daysRemaining} days left</span>
       </div>
-      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-2 w-full bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
         <div 
           className={`h-full ${colorClass} transition-all duration-500 ease-out`} 
           style={{ width: `${progress}%` }}

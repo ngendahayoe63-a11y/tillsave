@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
 
 export const EditPaymentPage = () => {
-  const { groupId, paymentId } = useParams();
+  const { paymentId } = useParams();
   const navigate = useNavigate();
   
   const [isLoading, setIsLoading] = useState(true);

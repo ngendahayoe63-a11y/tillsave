@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/ui/button';
@@ -58,7 +58,7 @@ export const OnboardingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col justify-between p-6">
+    <div className="min-h-screen bg-background flex flex-col justify-between p-6">
       
       {/* Skip Button */}
       <div className="flex justify-end">

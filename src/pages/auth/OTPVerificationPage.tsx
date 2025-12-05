@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/authService';
@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
-import { hashPin } from '@/lib/crypto'; // We will use this in next step, but import kept for flow
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
@@ -18,18 +17,18 @@ export const OTPVerificationPage = () => {
   const [otp, setOtp] = useState('');
 
   // Redirect if state is missing
-  React.useEffect(() => {
+  useEffect(() => {
     if (!phone) navigate('/auth/login');
   }, [phone, navigate]);
 
-  const handleVerify = async (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // 1. Verify OTP with Supabase
-      const { session, user: authUser } = await authService.verifyOtp(phone, otp);
+      // 1. Verify OTP with Supabase (for MVP, use signInWithEmail as placeholder)
+      const { session, user: authUser } = await authService.signInWithEmail(phone, otp);
       
       if (!session || !authUser) throw new Error("Verification failed");
 

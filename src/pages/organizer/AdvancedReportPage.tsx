@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { analyticsService } from '@/services/analyticsService';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, TrendingUp, Users, AlertCircle, PiggyBank, Wallet } from 'lucide-react';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export const AdvancedReportPage = () => {
@@ -23,12 +23,7 @@ export const AdvancedReportPage = () => {
         const group = await groupsService.getGroupDetails(groupId);
         setGroupName(group.name);
 
-        const now = new Date();
-        const data = await analyticsService.getGroupAnalytics(
-          groupId, 
-          startOfMonth(now), 
-          endOfMonth(now)
-        );
+        const data = await analyticsService.getGroupAnalytics();
         setStats(data);
       } catch (error) {
         console.error(error);

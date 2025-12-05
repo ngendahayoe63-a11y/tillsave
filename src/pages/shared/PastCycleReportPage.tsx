@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { payoutService } from '@/services/payoutService';
 import { generatePayoutPDF } from '@/utils/pdfGenerator';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Download } from 'lucide-react';
 import { format } from 'date-fns';
 

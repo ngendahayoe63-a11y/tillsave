@@ -42,7 +42,7 @@ export const RegisterPage = () => {
       const newUser = await authService.createUserProfile({
         id: authResponse.user.id,
         email: formData.email,
-        phone: null, 
+        phone: undefined, 
         name: formData.name,
         role: formData.role as any,
         pin_hash: 'PENDING',

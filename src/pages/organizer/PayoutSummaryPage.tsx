@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'; // Import translation hook
-import { payoutService, PayoutCalculation } from '@/services/payoutService';
+import { payoutService } from '@/services/payoutService';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,7 @@ export const PayoutSummaryPage = () => {
   
   const [isLoading, setIsLoading] = useState(true);
   const [groupName, setGroupName] = useState('');
-  const [payouts, setPayouts] = useState<PayoutCalculation[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
   const [totalEarnings, setTotalEarnings] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -26,16 +26,14 @@ export const PayoutSummaryPage = () => {
         setGroupName(group.name);
 
         // 2. Calculate Math
-        const data = await payoutService.calculateGroupPayouts(groupId);
+        const data = await payoutService.previewCyclePayout(groupId);
         setPayouts(data);
 
         // 3. Calculate Organizer Earnings (Sum of all fees)
         const earnings: Record<string, number> = {};
-        data.forEach(p => {
-          p.breakdown.forEach(b => {
-            if (!earnings[b.currency]) earnings[b.currency] = 0;
-            earnings[b.currency] += b.organizerFee;
-          });
+        data.forEach((p: any) => {
+          if (!earnings[p.currency]) earnings[p.currency] = 0;
+          earnings[p.currency] += p.organizerFee;
         });
         setTotalEarnings(earnings);
 
@@ -93,34 +91,32 @@ export const PayoutSummaryPage = () => {
           
           <div className="space-y-4">
             {payouts.map((member) => (
-              <Card key={member.memberId}>
+              <Card key={member.membershipId}>
                 <CardHeader className="p-4 bg-gray-50 border-b">
                   <h3 className="font-bold">{member.memberName}</h3>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
-                  {member.breakdown.map((b) => (
-                    <div key={b.currency} className="border-l-2 border-primary pl-3">
+                  <div className="border-l-2 border-primary pl-3">
                       <div className="flex justify-between items-baseline mb-1">
-                        <span className="font-bold text-lg">{b.currency}</span>
-                        <span className="text-xs text-gray-500">{b.daysContributed} {t('payouts.days_paid')}</span>
+                        <span className="font-bold text-lg">{member.currency}</span>
+                        <span className="text-xs text-gray-500">{member.daysContributed} {t('payouts.days_paid')}</span>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-y-1 text-sm">
                         <div className="text-gray-500">{t('payouts.total_saved')}:</div>
-                        <div className="text-right font-medium">{b.totalSaved.toLocaleString()}</div>
+                        <div className="text-right font-medium">{member.totalSaved.toLocaleString()}</div>
                         
                         <div className="text-red-500">{t('payouts.org_fee')}:</div>
-                        <div className="text-right text-red-500">- {b.organizerFee.toLocaleString()}</div>
+                        <div className="text-right text-red-500">- {member.organizerFee.toLocaleString()}</div>
                         
                         <div className="col-span-2 border-t my-1"></div>
                         
                         <div className="font-bold">{t('payouts.net_payout')}:</div>
                         <div className="text-right font-bold text-green-700 text-lg">
-                          {b.netPayout.toLocaleString()}
+                          {member.netPayout.toLocaleString()}
                         </div>
                       </div>
                     </div>
-                  ))}
                 </CardContent>
               </Card>
             ))}

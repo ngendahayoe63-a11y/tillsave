@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useGroupsStore } from '@/store/groupsStore';
 import { analyticsService } from '@/services/analyticsService';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Import Input
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupCard } from '@/components/groups/GroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Users, LayoutGrid, Search } from 'lucide-react';
+import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, ArrowRight, Activity } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
 
 export const OrganizerDashboard = () => {
   const { t } = useTranslation();
@@ -19,8 +20,6 @@ export const OrganizerDashboard = () => {
   
   const [globalStats, setGlobalStats] = useState<any>(null);
   const [statsLoading, setStatsLoading] = useState(true);
-  
-  // Search State
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -33,118 +32,208 @@ export const OrganizerDashboard = () => {
     }
   }, [user, fetchGroups]);
 
+  // Helper to render currencies
   const renderCurrencyLine = (data: Record<string, number> | undefined) => {
     if (!data || Object.keys(data).length === 0) return "0";
     return Object.entries(data).map(([curr, val]) => (
-      <span key={curr} className="mr-3">
-        <span className="text-xs opacity-70 mr-1">{curr}</span>
-        {val.toLocaleString()}
-      </span>
+      <div key={curr} className="flex items-baseline gap-1">
+        <span className="text-lg font-bold">{val.toLocaleString()}</span>
+        <span className="text-xs font-medium opacity-70">{curr}</span>
+      </div>
     ));
   };
 
-  // Filter Logic
-  const filteredGroups = groups.filter(group => 
-    group.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    group.join_code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  if (groupsLoading || statsLoading) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
       
-      {/* Max width container for responsiveness */}
+      {/* HEADER & SEARCH (Mobile/Desktop Adaptive) */}
       <div className="p-4 max-w-7xl mx-auto space-y-6">
-
-        {/* Global Summary Card - Full Width on Mobile, limited on Desktop */}
-        <div className="max-w-md mx-auto lg:max-w-none">
-            {!statsLoading && globalStats && globalStats.totalGroups > 0 && (
-            <Card className="bg-gradient-to-r from-gray-900 to-gray-800 text-white border-none shadow-xl">
-                <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-4 opacity-80">
-                    <LayoutGrid className="h-4 w-4" />
-                    <span className="text-sm font-semibold uppercase tracking-wider">Business Overview</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                    <div>
-                    <p className="text-xs text-gray-400 mb-1">Total Managed</p>
-                    <div className="font-bold text-lg leading-tight">
-                        {renderCurrencyLine(globalStats.totalManaged)}
-                    </div>
-                    </div>
-                    <div>
-                    <p className="text-xs text-gray-400 mb-1">My Earnings (Mo.)</p>
-                    <div className="font-bold text-lg leading-tight text-green-400">
-                        {renderCurrencyLine(globalStats.totalEarnings)}
-                    </div>
-                    </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-blue-400" />
-                        <span>{globalStats.totalMembers} Members</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <LayoutGrid className="h-4 w-4 text-purple-400" />
-                        <span>{globalStats.totalGroups} Groups</span>
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
-            )}
+        
+        {/* Welcome Banner */}
+        <div className="bg-gradient-to-r from-blue-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+          <div className="relative z-10">
+            <h1 className="text-2xl font-bold mb-2">👋 Welcome back, {user?.name.split(' ')[0]}!</h1>
+            <p className="text-blue-100 text-sm max-w-xl">
+              It's {format(new Date(), 'MMMM do, yyyy')}. You are managing <strong>{groups.length} groups</strong> with <strong>{globalStats?.totalMembers} members</strong>. 
+              <span className="hidden sm:inline"> Everything looks stable today.</span>
+            </p>
+          </div>
         </div>
 
-        {/* Action Bar: Search + Create Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('dashboard.my_groups')}</h2>
+        {/* STATS GRID (1 col mobile, 2 col tablet, 4 col desktop) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase">Total Members</p>
+                  <h3 className="text-2xl font-bold mt-1">{globalStats?.totalMembers}</h3>
+                  <p className="text-xs text-green-600 flex items-center mt-1">
+                    <TrendingUp className="w-3 h-3 mr-1" /> Active
+                  </p>
+                </div>
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase">Total Managed</p>
+                  <div className="mt-1 space-y-1">
+                    {renderCurrencyLine(globalStats?.totalManaged)}
+                  </div>
+                </div>
+                <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <Wallet className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase">Your Earnings</p>
+                  <div className="mt-1 space-y-1">
+                    {renderCurrencyLine(globalStats?.totalEarnings)}
+                  </div>
+                </div>
+                <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase">Actions Needed</p>
+                  <h3 className="text-2xl font-bold mt-1">2</h3>
+                  <p className="text-xs text-orange-600 mt-1">Payouts upcoming</p>
+                </div>
+                <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* MAIN LAYOUT: Left Content (Groups) vs Right Sidebar (Actions/Alerts) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* LEFT COLUMN (2/3 width on desktop) */}
+          <div className="lg:col-span-2 space-y-6">
             
-            <div className="flex w-full sm:w-auto gap-2">
-                <div className="relative flex-1 sm:w-64">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search groups..." 
-                        className="pl-8 bg-white dark:bg-slate-900" 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                
-                {groups.length > 0 && (
-                    <Link to="/organizer/create-group">
-                        <Button size="sm" className="gap-2 h-10">
-                        <Plus className="h-4 w-4" /> <span className="hidden sm:inline">{t('dashboard.new_group')}</span>
-                        </Button>
-                    </Link>
-                )}
-            </div>
-        </div>
-
-        {/* Groups Grid */}
-        {groupsLoading ? (
-            <DashboardSkeleton />
-        ) : filteredGroups.length > 0 ? (
-            // FIX: Responsive Grid Layout
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredGroups.map((group) => (
-                    <GroupCard key={group.id} group={group} role="ORGANIZER" />
-                ))}
-            </div>
-        ) : (
-            groups.length > 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                    No groups found matching "{searchTerm}"
-                </div>
-            ) : (
-                <EmptyState
-                    icon={Users}
-                    title="Start Your First Community"
-                    description="Create a savings group, invite members, and start tracking contributions today."
-                    actionLabel={t('dashboard.create_first')}
-                    onAction={() => window.location.href = '/organizer/create-group'}
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('dashboard.my_groups')}</h2>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input 
+                  placeholder="Search groups..." 
+                  className="pl-9 bg-white dark:bg-slate-900"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-            )
-        )}
+              </div>
+            </div>
+
+            {/* Groups Grid */}
+            {filteredGroups.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredGroups.map(group => (
+                  <GroupCard key={group.id} group={group} role="ORGANIZER" />
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                icon={Users}
+                title="No Groups Found"
+                description="Create your first savings group to get started."
+                actionLabel="Create Group"
+                onAction={() => window.location.href = '/organizer/create-group'}
+              />
+            )}
+          </div>
+
+          {/* RIGHT COLUMN (1/3 width on desktop) - Sticky on Desktop */}
+          <div className="space-y-6 lg:sticky lg:top-24 h-fit">
+            
+            {/* Quick Actions */}
+            <Card className="dark:bg-slate-900 border-none shadow-md">
+              <CardHeader>
+                <CardTitle className="text-sm uppercase tracking-wider text-gray-500">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Link to="/organizer/create-group">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Plus className="mr-2 h-4 w-4 text-primary" /> {t('dashboard.new_group')}
+                  </Button>
+                </Link>
+                <Button className="w-full justify-start" variant="outline" disabled>
+                  <Activity className="mr-2 h-4 w-4 text-green-600" /> View Global Report
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Alerts Section */}
+            <Card className="dark:bg-slate-900 border-none shadow-md">
+              <CardHeader>
+                <CardTitle className="text-sm uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-orange-500" /> Attention Needed
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 bg-red-50 dark:bg-red-900/10 border-l-2 border-red-500 rounded-r text-sm">
+                  <p className="font-medium text-red-800 dark:text-red-300">3 Missed Payments</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">Morning Savers • Today</p>
+                </div>
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/10 border-l-2 border-yellow-500 rounded-r text-sm">
+                  <p className="font-medium text-yellow-800 dark:text-yellow-300">Payout Due Soon</p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Weekend Warriors • 3 days</p>
+                </div>
+                <Button variant="ghost" size="sm" className="w-full text-xs">
+                  View All Alerts <ArrowRight className="ml-1 w-3 h-3" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity Feed (Mocked for UI) */}
+            <Card className="dark:bg-slate-900 border-none shadow-md">
+              <CardHeader>
+                <CardTitle className="text-sm uppercase tracking-wider text-gray-500">Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[1,2,3].map((_, i) => (
+                    <div key={i} className="flex gap-3 items-start">
+                      <div className="w-2 h-2 mt-2 rounded-full bg-green-500 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium dark:text-gray-200">Payment Received</p>
+                        <p className="text-xs text-gray-500">John paid 2,000 RWF • 5m ago</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+        </div>
       </div>
     </div>
   );

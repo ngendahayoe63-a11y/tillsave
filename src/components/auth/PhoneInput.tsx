@@ -1,13 +1,6 @@
-import React from 'react';
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface PhoneInputProps {
   value: string;
@@ -25,7 +18,7 @@ const COUNTRY_CODES = [
 ];
 
 export const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, error, disabled }) => {
-  const [countryCode, setCountryCode] = React.useState('+250');
+  const [countryCode, setCountryCode] = useState('+250');
 
   // Handle number input
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {

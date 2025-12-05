@@ -28,7 +28,7 @@ export const authService = {
     return data as UserProfile;
   },
 
-  checkUserExists: async (email: string): Promise<boolean> => {
+  checkUserExists: async (): Promise<boolean> => {
     return false; 
   },
 

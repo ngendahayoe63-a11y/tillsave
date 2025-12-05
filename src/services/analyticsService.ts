@@ -1,6 +1,6 @@
 import { supabase } from '@/api/supabase';
 import { currencyService } from './currencyService';
-import { eachDayOfInterval, format, startOfMonth, endOfMonth, isAfter, isSameDay, differenceInCalendarDays, addDays } from 'date-fns';
+import { startOfMonth, endOfMonth, differenceInCalendarDays, addDays } from 'date-fns';
 
 export const analyticsService = {
   // ... (Keep getGlobalOrganizerStats and getGroupAnalytics as they are)
@@ -27,13 +27,13 @@ export const analyticsService = {
     return { totalGroups: groups.length, totalMembers: memberCount || 0, totalManaged, totalEarnings };
   },
 
-  getGroupAnalytics: async (groupId: string, cycleStart: Date, cycleEnd: Date) => {
+  getGroupAnalytics: async () => {
      // (Keep previous implementation)
      // ...
      return { totalSavings: {}, organizerEarnings: {}, completionRate: 0, missedPayments: 0, chartData: [], memberCount: 0 };
   },
 
-  getMemberAnalytics: async (membershipId: string, monthStart: Date) => {
+  getMemberAnalytics: async () => {
      // (Keep previous implementation)
      return { calendarData: [], daysPaidCount: 0, totalThisMonth: 0 };
   },

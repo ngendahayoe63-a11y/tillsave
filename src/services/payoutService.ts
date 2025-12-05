@@ -1,6 +1,5 @@
 import { supabase } from '@/api/supabase';
 import { analyticsService } from './analyticsService';
-import { startOfMonth, endOfMonth } from 'date-fns';
 
 export interface PayoutItem {
   membershipId: string;
@@ -82,8 +81,8 @@ export const payoutService = {
     const { data: group } = await supabase.from('groups').select('current_cycle_start_date, cycle_days').eq('id', groupId).single();
     if (!group) throw new Error("Group not found");
     const start = new Date(group.current_cycle_start_date);
-    const end = new Date(); 
-    const analytics = await analyticsService.getGroupAnalytics(groupId, start, end);
+    const end = new Date();
+    const analytics = await analyticsService.getGroupAnalytics();
     if (!analytics) throw new Error("Could not calculate analytics");
     const { data: members } = await supabase.from('memberships').select('id, users(name)').eq('group_id', groupId).eq('status', 'ACTIVE');
     if (!members) return [];
@@ -100,7 +99,7 @@ export const payoutService = {
         const dailyRate = rateObj ? rateObj.daily_rate : 0;
         const days = new Set(safePayments.filter(p => p.currency === currency).map(p => p.payment_date)).size;
         const fee = dailyRate; 
-        payoutItems.push({ membershipId: member.id, memberName: member.users?.name || 'Unknown', currency, totalSaved: total, organizerFee: fee, netPayout: total - fee, daysContributed: days });
+        payoutItems.push({ membershipId: member.id, memberName: member.users?.[0]?.name || 'Unknown', currency, totalSaved: total, organizerFee: fee, netPayout: total - fee, daysContributed: days });
       }
     }
     return payoutItems;

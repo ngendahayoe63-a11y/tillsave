@@ -11,7 +11,7 @@ import { Loader2, ArrowLeft, Save, Trash2, AlertTriangle } from 'lucide-react';
 export const GroupSettingsPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const { fetchGroups } = useGroupsStore(); // To refresh store after update
+  useGroupsStore(); // Access store for context
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -89,11 +89,11 @@ export const ProfilePage = () => {
           />
         </div>
         
-        <h1 className="text-2xl font-bold">{user?.name}</h1>
-        <p className="text-gray-500 text-sm mb-4">@{user?.email?.split('@')[0] || 'username'}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{user?.name}</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">@{user?.email?.split('@')[0] || 'username'}</p>
         
         <div className="flex justify-center gap-2">
-          <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-semibold uppercase">
+          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-3 py-1 rounded-full font-semibold uppercase">
             {user?.role}
           </span>
         </div>
@@ -183,21 +183,21 @@ export const ProfilePage = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <button 
                     onClick={() => setTheme('light')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${theme === 'light' ? 'border-primary bg-primary/5' : 'border-transparent bg-gray-100'}`}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${theme === 'light' ? 'border-primary bg-primary/5' : 'border-transparent bg-gray-100 dark:bg-slate-800'}`}
                   >
                     <Sun className="h-6 w-6 mb-2" />
                     <span className="text-xs font-medium">Light</span>
                   </button>
                   <button 
                     onClick={() => setTheme('dark')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${theme === 'dark' ? 'border-primary bg-primary/5' : 'border-transparent bg-gray-100'}`}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${theme === 'dark' ? 'border-primary bg-primary/5' : 'border-transparent bg-gray-100 dark:bg-slate-800'}`}
                   >
                     <Moon className="h-6 w-6 mb-2" />
                     <span className="text-xs font-medium">Dark</span>
                   </button>
                   <button 
                     onClick={() => setTheme('system')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${theme === 'system' ? 'border-primary bg-primary/5' : 'border-transparent bg-gray-100'}`}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${theme === 'system' ? 'border-primary bg-primary/5' : 'border-transparent bg-gray-100 dark:bg-slate-800'}`}
                   >
                     <Monitor className="h-6 w-6 mb-2" />
                     <span className="text-xs font-medium">System</span>

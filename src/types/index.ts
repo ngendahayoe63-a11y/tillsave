@@ -11,6 +11,8 @@ export interface UserProfile {
   role: Role;
   pin_hash: string;
   id_number?: string;
+  avatar_url?: string;
+  bio?: string;
   preferred_language: Language;
   preferred_currency: Currency;
   status: UserStatus;

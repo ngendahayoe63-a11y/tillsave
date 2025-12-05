@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { payoutService, PayoutCalculation } from '@/services/payoutService';
+import { payoutService } from '@/services/payoutService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, TrendingUp } from 'lucide-react';
@@ -12,7 +12,7 @@ export const PayoutPreviewPage = () => {
   const { user } = useAuthStore();
   
   const [isLoading, setIsLoading] = useState(true);
-  const [myPayout, setMyPayout] = useState<PayoutCalculation | null>(null);
+  const [myPayout, setMyPayout] = useState<any | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -20,7 +20,7 @@ export const PayoutPreviewPage = () => {
       try {
         // We reuse the service! It calculates for everyone, we just pick ours.
         // In a scaled app, we would make a specific API endpoint for single user efficiency.
-        const allPayouts = await payoutService.calculateGroupPayouts(groupId);
+        const allPayouts = await payoutService.previewCyclePayout(groupId);
         
         // Find my record by finding the member ID that matches my User ID
         // Note: The service returns memberId (which is membership uuid), not user uuid. 
@@ -32,7 +32,7 @@ export const PayoutPreviewPage = () => {
         // Let's rely on the fact the service returns a structure. 
         // We will just find the one that has our name for this MVP demonstration
         // (Production fix: Service should return userId in the object)
-        const mine = allPayouts.find(p => p.memberName === user.name); 
+        const mine = allPayouts.find((p: any) => p.memberName === user.name); 
         
         setMyPayout(mine || null);
 
@@ -48,8 +48,8 @@ export const PayoutPreviewPage = () => {
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">
+      <header className="bg-white dark:bg-slate-900 p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4 border-b border-gray-200 dark:border-gray-800">
         <Button variant="ghost" size="icon" onClick={() => navigate('/member')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -72,7 +72,7 @@ export const PayoutPreviewPage = () => {
                <p>No contributions found yet.</p>
              ) : (
                <div className="space-y-4">
-                 {myPayout.breakdown.map((b) => (
+                 {myPayout.breakdown?.map((b: any) => (
                    <div key={b.currency} className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
                       <div className="flex justify-between items-center mb-1">
                         <span className="font-bold">{b.currency}</span>

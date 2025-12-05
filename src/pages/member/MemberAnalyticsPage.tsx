@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { advancedAnalyticsService } from '@/services/advancedAnalyticsService';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HealthScoreCard } from '@/components/analytics/HealthScoreCard';
 import { PredictionCard } from '@/components/analytics/PredictionCard';
-import { Loader2, ArrowLeft, Lightbulb, TrendingUp } from 'lucide-react';
+import { Loader2, ArrowLeft, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import confetti from 'canvas-confetti';
 
@@ -103,7 +103,7 @@ export const MemberAnalyticsPage = () => {
                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry: any, index: number) => (
+                  {chartData.map((_: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={index === data.patterns.dayCounts.indexOf(Math.max(...data.patterns.dayCounts)) ? '#2563eb' : '#94a3b8'} />
                   ))}
                 </Bar>

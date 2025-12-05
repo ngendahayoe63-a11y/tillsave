@@ -1,4 +1,3 @@
-import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { BottomNav } from '@/components/layout/BottomNav';
