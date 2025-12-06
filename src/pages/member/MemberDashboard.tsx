@@ -7,6 +7,7 @@ import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity } from 'lucide-react';
+import { format } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 
 export const MemberDashboard = () => {
@@ -180,7 +181,7 @@ export const MemberDashboard = () => {
                           Payment made ✅
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(payment.payment_date).toLocaleDateString()}
+                          {payment.created_at ? format(new Date(payment.created_at), 'MMM d, yyyy HH:mm') : format(new Date(payment.payment_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                       <div className="text-right">
