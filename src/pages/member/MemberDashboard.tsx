@@ -286,7 +286,7 @@ export const MemberDashboard = () => {
                           Payment made ✅
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {payment.created_at ? format(new Date(payment.created_at), 'MMM d, yyyy HH:mm') : format(new Date(payment.payment_date), 'MMM d, yyyy')}
+                          {payment.recorded_at ? format(new Date(payment.recorded_at), 'MMM d, yyyy HH:mm') : format(new Date(payment.payment_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                       <div className="text-right">

@@ -240,7 +240,7 @@ export const dashboardService = {
 
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
-        .select('id, amount, currency, payment_date, membership_id, created_at')
+        .select('id, amount, currency, payment_date, membership_id, recorded_at')
         .in('membership_id', membershipIds)
         .gte('payment_date', monthStart.toISOString())
         .order('payment_date', { ascending: false });
@@ -270,7 +270,7 @@ export const dashboardService = {
         .from('payout_items')
         .select('id, membership_id, currency, organizer_fee')
         .in('membership_id', membershipIds)
-        .order('created_at', { ascending: false })
+        .order('disbursed_at', { ascending: false })
         .limit(membershipIds.length * 2); // Get last few payouts per member
 
       if (payoutsError) throw payoutsError;
