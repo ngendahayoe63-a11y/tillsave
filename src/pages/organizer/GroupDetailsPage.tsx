@@ -46,7 +46,9 @@ export const GroupDetailsPage = () => {
 
   // Filter Members - exclude organizer from regular members list
   const filteredMembers = members.filter(member => {
-      const name = member.users?.name || '';
+      // Handle both array and object user data
+      const userData = Array.isArray(member.users) ? member.users[0] : member.users;
+      const name = userData?.name || '';
       const isNotOrganizer = !organizerMembership || member.id !== organizerMembership.id;
       return name.toLowerCase().includes(searchTerm.toLowerCase()) && isNotOrganizer;
   });
@@ -163,7 +165,8 @@ export const GroupDetailsPage = () => {
             </div>
           ) : filteredMembers.length > 0 ? (
             filteredMembers.map((member: any) => {
-              const memberName = member.users?.name || 'Unknown Member';
+              const userData = Array.isArray(member.users) ? member.users[0] : member.users;
+              const memberName = userData?.name || 'Unknown Member';
               const memberInitials = memberName.substring(0, 2).toUpperCase();
 
               return (

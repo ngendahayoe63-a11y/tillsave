@@ -120,32 +120,36 @@ export const AdvancedReportPage = () => {
         </div>
 
         {/* Activity Chart */}
-        <Card className="dark:bg-slate-900 border-0">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2 dark:text-white">
-              <TrendingUp className="h-4 w-4" /> Daily Payment Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-64 pl-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgb(107, 114, 128)" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{fontSize: 10, fill: '#9CA3AF'}} 
-                  interval={4}
-                  stroke="rgb(156, 163, 175)"
-                />
-                <YAxis allowDecimals={false} tick={{fontSize: 10, fill: '#9CA3AF'}} stroke="rgb(156, 163, 175)" />
-                <Tooltip 
-                  cursor={{fill: 'rgba(59, 130, 246, 0.1)'}}
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(31, 41, 55, 0.9)', color: '#fff'}}
-                />
-                <Bar dataKey="payments" fill="#2563eb" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {stats.chartData && stats.chartData.length > 0 && (
+          <Card className="dark:bg-slate-900 border-0">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2 dark:text-white">
+                <TrendingUp className="h-4 w-4" /> Member Savings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-64 pl-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.chartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgb(107, 114, 128)" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{fontSize: 10, fill: '#9CA3AF'}} 
+                    stroke="rgb(156, 163, 175)"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis allowDecimals={false} tick={{fontSize: 10, fill: '#9CA3AF'}} stroke="rgb(156, 163, 175)" />
+                  <Tooltip 
+                    cursor={{fill: 'rgba(59, 130, 246, 0.1)'}}
+                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(31, 41, 55, 0.9)', color: '#fff'}}
+                  />
+                  <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
 
       </main>
     </div>

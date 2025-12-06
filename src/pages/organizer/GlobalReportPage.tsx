@@ -38,16 +38,27 @@ export const GlobalReportPage = () => {
   //   ));
   // };
 
-  // Sample chart data (would come from aggregated payments in real implementation)
-  const paymentTrendData = [
-    { date: 'Mon', payments: 24, members: 12 },
-    { date: 'Tue', payments: 13, members: 15 },
-    { date: 'Wed', payments: 31, members: 18 },
-    { date: 'Thu', payments: 18, members: 14 },
-    { date: 'Fri', payments: 28, members: 22 },
-    { date: 'Sat', payments: 35, members: 25 },
-    { date: 'Sun', payments: 22, members: 19 },
-  ];
+  // Generate payment trend from actual data
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const paymentsByDay: Record<number, { payments: number; members: Set<string> }> = {};
+  
+  (dashboardData?.recentPayments || []).forEach((p: any) => {
+    const date = new Date(p.payment_date);
+    const dayIndex = date.getDay();
+    if (!paymentsByDay[dayIndex]) {
+      paymentsByDay[dayIndex] = { payments: 0, members: new Set() };
+    }
+    paymentsByDay[dayIndex].payments += 1;
+    if (p.memberships?.user_id) {
+      paymentsByDay[dayIndex].members.add(p.memberships.user_id);
+    }
+  });
+
+  const paymentTrendData = days.map((day, index) => ({
+    date: day,
+    payments: paymentsByDay[index]?.payments || 0,
+    members: paymentsByDay[index]?.members.size || 0
+  }));
 
   const groupPerformanceData = (dashboardData?.groups || []).map((g: any) => ({
     name: g.name,
