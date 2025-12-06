@@ -166,7 +166,8 @@ export const payoutService = {
         // Create payout item for each currency
         for (const [currency, total] of Object.entries(currencyGroups)) {
           const currencyPayments = safePayments.filter(p => p.currency === currency);
-          const days = new Set(currencyPayments.map(p => p.payment_date)).size;
+          // Use payment count (each payment = 1 day of contribution), not unique dates
+          const days = currencyPayments.length;
           
           // Try to get daily rate from database first
           let dailyRate = 0;
