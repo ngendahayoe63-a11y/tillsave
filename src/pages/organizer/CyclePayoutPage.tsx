@@ -153,6 +153,43 @@ export const CyclePayoutPage = () => {
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
 
+  // Check if there are any savings to payout
+  const hasSavings = payoutItems.length > 0 && Object.keys(totals.saved).length > 0 && Object.values(totals.saved).some(amount => (amount as number) > 0);
+
+  // Show empty state if no savings recorded
+  if (!hasSavings && !isFinalized) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col">
+        <header className="bg-white dark:bg-slate-900 p-4 shadow-sm border-b border-gray-200 dark:border-gray-800 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-bold">End Cycle & Payout</h1>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="max-w-sm text-center">
+            <div className="h-20 w-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              No Savings Recorded
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-2">
+              You cannot end the cycle because no members have recorded any savings yet.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
+              Members need to record at least one payment before you can finalize the cycle.
+            </p>
+            <Button onClick={() => navigate(-1)} className="w-full">
+              Back to Group
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (isFinalized) {
     if (showPreview) {
       return (
@@ -339,14 +376,22 @@ export const CyclePayoutPage = () => {
 
       {/* Footer Action - On mobile sits above BottomNav (64px), on desktop at actual bottom */}
       <div className="fixed md:static left-0 right-0 p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 no-print z-40" style={{ bottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
-        <div className="max-w-3xl mx-auto flex gap-2 sm:gap-4">
-          <Button variant="outline" className="flex-1 h-10 sm:h-11 text-xs sm:text-base" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-          <Button className="flex-[2] h-10 sm:h-11 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-base" onClick={() => setShowConfirmDialog(true)} disabled={isSaving}>
-            {isSaving ? <Loader2 className="animate-spin mr-1 sm:mr-2 h-4 w-4" /> : <CheckCircle className="mr-1 sm:mr-2 h-4 w-4" />}
-            <span className="truncate">Finalize</span>
-          </Button>
+        <div className="max-w-3xl mx-auto space-y-3">
+          {!hasSavings && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded text-red-700 dark:text-red-300 text-sm">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>At least one member must record a payment before finalizing</span>
+            </div>
+          )}
+          <div className="flex gap-2 sm:gap-4">
+            <Button variant="outline" className="flex-1 h-10 sm:h-11 text-xs sm:text-base" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+            <Button className="flex-[2] h-10 sm:h-11 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-base" onClick={() => setShowConfirmDialog(true)} disabled={isSaving || !hasSavings} title={!hasSavings ? "No savings recorded - cannot finalize empty cycle" : ""}>
+              {isSaving ? <Loader2 className="animate-spin mr-1 sm:mr-2 h-4 w-4" /> : <CheckCircle className="mr-1 sm:mr-2 h-4 w-4" />}
+              <span className="truncate">Finalize</span>
+            </Button>
+          </div>
         </div>
       </div>
 
