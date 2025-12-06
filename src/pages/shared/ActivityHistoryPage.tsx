@@ -87,51 +87,68 @@ export const ActivityHistoryPage = () => {
         if (groups && groups.length > 0) {
           const groupIds = groups.map(g => g.id);
 
-          // Get all payments
-          const { data: payments } = await supabase
-            .from('payments')
-            .select(`
-              id,
-              amount,
-              currency,
-              payment_date,
-              recorded_at,
-              status,
-              memberships(
-                id,
-                status,
-                user_id,
-                users(name),
-                group_id,
-                groups(name)
-              )
-            `)
-            .in('memberships.group_id', groupIds)
-            .order('payment_date', { ascending: false });
+          // Get all memberships in organizer's groups
+          const { data: memberships } = await supabase
+            .from('memberships')
+            .select('id, group_id, user_id, status, groups(name)')
+            .in('group_id', groupIds)
+            .eq('status', 'ACTIVE');
 
-          payments?.forEach((p: any) => {
-            if (p.memberships?.users?.name && p.memberships?.groups?.name) {
-              allActivities.push({
-                id: p.id,
-                type: 'payment',
-                amount: p.amount,
-                currency: p.currency,
-                status: p.status || 'completed',
-                memberName: p.memberships.users.name,
-                groupName: p.memberships.groups.name,
-                timestamp: p.recorded_at || p.payment_date,
-                paymentDate: p.payment_date,
-                recordedAt: p.recorded_at,
-                description: `Payment received from ${p.memberships.users.name} in ${p.memberships.groups.name}`,
-                groupId: p.memberships.group_id,
-                memberId: p.memberships.user_id,
-                details: {
-                  membershipId: p.memberships.id,
-                  membershipStatus: p.memberships.status,
-                },
-              });
-            }
-          });
+          if (memberships && memberships.length > 0) {
+            const membershipIds = memberships.map(m => m.id);
+
+            // Get all payments for those memberships
+            const { data: payments } = await supabase
+              .from('payments')
+              .select(`
+                id,
+                amount,
+                currency,
+                payment_date,
+                recorded_at,
+                status,
+                membership_id,
+                memberships(
+                  id,
+                  status,
+                  user_id,
+                  group_id,
+                  users(name)
+                )
+              `)
+              .in('membership_id', membershipIds)
+              .order('payment_date', { ascending: false });
+
+            payments?.forEach((p: any) => {
+              if (p.memberships?.users?.name) {
+                const membership = memberships.find(m => m.id === p.membership_id);
+                const groupsData = membership?.groups as any;
+                const groupName = Array.isArray(groupsData) 
+                  ? groupsData[0]?.name 
+                  : groupsData?.name;
+
+                allActivities.push({
+                  id: p.id,
+                  type: 'payment',
+                  amount: p.amount,
+                  currency: p.currency,
+                  status: p.status || 'completed',
+                  memberName: p.memberships.users.name,
+                  groupName: groupName || 'Unknown',
+                  timestamp: p.recorded_at || p.payment_date,
+                  paymentDate: p.payment_date,
+                  recordedAt: p.recorded_at,
+                  description: `Payment received from ${p.memberships.users.name} in ${groupName || 'Unknown'}`,
+                  groupId: p.memberships.group_id,
+                  memberId: p.memberships.user_id,
+                  details: {
+                    membershipId: p.memberships.id,
+                    membershipStatus: p.memberships.status,
+                  },
+                });
+              }
+            });
+          }
 
           // Get payouts
           const { data: payouts } = await supabase
