@@ -102,7 +102,7 @@ export const dashboardService = {
           memberships(user_id, users(name))
         `)
         .in('group_id', groupIds)
-        .order('payment_date', { ascending: false })
+        .order('payment_date', { ascending: false }) // Newest payments first (reverse chronological)
         .limit(10);
 
       if (paymentsError) throw paymentsError;
@@ -243,7 +243,7 @@ export const dashboardService = {
         .select('id, amount, currency, payment_date, membership_id, recorded_at')
         .in('membership_id', membershipIds)
         .gte('payment_date', monthStart.toISOString())
-        .order('payment_date', { ascending: false });
+        .order('payment_date', { ascending: false }); // Newest payments first (reverse chronological)
 
       if (paymentsError) throw paymentsError;
 
