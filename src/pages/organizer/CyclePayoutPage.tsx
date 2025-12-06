@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, CheckCircle, AlertTriangle, Printer } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import PayoutReportPDF from '@/components/payouts/PayoutReportPDF';
+import { CycleCompleteModal } from '@/components/modals/CycleCompleteModal';
 import '@/styles/print.css';
 
 export const CyclePayoutPage = () => {
@@ -21,6 +22,7 @@ export const CyclePayoutPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isFinalized, setIsFinalized] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showCycleComplete, setShowCycleComplete] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   
   const [groupName, setGroupName] = useState('');
@@ -80,10 +82,12 @@ export const CyclePayoutPage = () => {
     }
   }, [isFinalized, showPreview]);
 
-  const handleFinalize = async () => {
+
+  const handleConfirmFinalize = async () => {
     if (!groupId) return;
     
     setIsSaving(true);
+    setShowConfirmDialog(false);
     try {
       await payoutService.finalizePayout(groupId, payoutItems);
       setIsFinalized(true);
@@ -98,12 +102,12 @@ export const CyclePayoutPage = () => {
       addToast({
         type: 'success',
         title: 'Payout finalized',
-        description: 'Cycle closed. Print preview will open to save as PDF.',
+        description: 'Cycle closed. Now start the next cycle to continue.',
       });
 
-      // Show the finalized preview screen with print option
+      // Show cycle complete modal
       setTimeout(() => {
-        setShowPreview(true);
+        setShowCycleComplete(true);
       }, 500);
     } catch (error: any) {
       addToast({
@@ -114,6 +118,37 @@ export const CyclePayoutPage = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleStartNextCycle = async () => {
+    if (!groupId) return;
+    
+    setIsSaving(true);
+    try {
+      await payoutService.startNextCycle(groupId);
+      
+      addToast({
+        type: 'success',
+        title: 'Next cycle started',
+        description: 'Members can now contribute to the new cycle.',
+      });
+
+      setShowCycleComplete(false);
+      navigate(`/organizer/group/${groupId}`);
+    } catch (error: any) {
+      addToast({
+        type: 'error',
+        title: 'Failed to start next cycle',
+        description: error.message,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleViewReport = () => {
+    setShowCycleComplete(false);
+    setShowPreview(true);
   };
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
@@ -341,10 +376,8 @@ export const CyclePayoutPage = () => {
                 <Button variant="outline" className="flex-1" onClick={() => setShowConfirmDialog(false)}>
                   Cancel
                 </Button>
-                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => {
-                  setShowConfirmDialog(false);
-                  handleFinalize();
-                }}>
+                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleConfirmFinalize()} disabled={isSaving}>
+                  {isSaving && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
                   Yes, Finalize
                 </Button>
               </div>
@@ -352,6 +385,16 @@ export const CyclePayoutPage = () => {
           </Card>
         </div>
       )}
+
+      {/* Cycle Complete Modal */}
+      <CycleCompleteModal
+        isOpen={showCycleComplete}
+        cycleNumber={(groupData?.current_cycle || 1) + 1}
+        groupName={groupName}
+        onStartNextCycle={handleStartNextCycle}
+        onViewReport={handleViewReport}
+        isLoading={isSaving}
+      />
     </div>
   );
 };

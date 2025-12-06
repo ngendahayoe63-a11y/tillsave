@@ -283,5 +283,39 @@ export const payoutService = {
     
     console.log('Payout finalized successfully');
     return payout;
+  },
+
+  /**
+   * START NEXT CYCLE: Create a new cycle after payout finalized
+   */
+  startNextCycle: async (groupId: string) => {
+    const today = new Date().toISOString();
+    
+    // Get current cycle number
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('current_cycle, cycle_number')
+      .eq('id', groupId)
+      .single();
+    
+    if (groupError) throw groupError;
+    
+    // Use whichever field exists
+    const currentCycle = group?.cycle_number || group?.current_cycle || 1;
+    const nextCycle = currentCycle + 1;
+    
+    // Update group with new cycle
+    const { error: updateError } = await supabase
+      .from('groups')
+      .update({
+        current_cycle: nextCycle,
+        cycle_number: nextCycle,
+        current_cycle_start_date: today,
+        status: 'ACTIVE'
+      })
+      .eq('id', groupId);
+    
+    if (updateError) throw updateError;
+    return { cycleNumber: nextCycle, startDate: today };
   }
 };
