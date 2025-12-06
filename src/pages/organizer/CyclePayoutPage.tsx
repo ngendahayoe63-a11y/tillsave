@@ -123,30 +123,15 @@ export const CyclePayoutPage = () => {
         <h1 className="text-lg font-bold">End Cycle & Payout</h1>
       </header>
 
-      <main className="p-4 max-w-3xl mx-auto space-y-6">
+      <main className="p-4 max-w-3xl mx-auto space-y-6 pb-28">
         
         {/* Warning Card */}
         <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-900/30">
           <CardContent className="p-4 flex gap-3">
             <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 shrink-0" />
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              Please review all amounts below. Once you click "Finalize", these numbers will be permanently recorded.
+              All members receive their full contributions. Review amounts below carefully before finalizing.
             </p>
-          </CardContent>
-        </Card>
-
-        {/* Organizer Earnings */}
-        <Card className="bg-slate-900 text-white border-none">
-          <CardHeader>
-            <CardTitle>Your Earnings (Fees)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {Object.entries(totals.fees).map(([curr, amount]: any) => (
-              <div key={curr} className="flex justify-between items-center text-lg">
-                <span className="opacity-70">{curr}</span>
-                <span className="font-bold text-green-400">{amount.toLocaleString()}</span>
-              </div>
-            ))}
           </CardContent>
         </Card>
 
@@ -160,15 +145,15 @@ export const CyclePayoutPage = () => {
                   <div>
                     <div className="font-bold">{item.memberName}</div>
                     <div className="text-xs text-gray-500">
-                      Saved: {item.totalSaved.toLocaleString()} {item.currency}
+                      Days Contributed: {item.daysContributed}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-xl font-bold text-green-700 dark:text-green-400">
                       {item.netPayout.toLocaleString()} <span className="text-xs text-gray-500">{item.currency}</span>
                     </div>
-                    <div className="text-xs text-red-400">
-                      Fee: -{item.organizerFee.toLocaleString()}
+                    <div className="text-xs text-gray-500">
+                      Saved: {item.totalSaved.toLocaleString()} {item.currency}
                     </div>
                   </div>
                 </CardContent>
@@ -180,15 +165,14 @@ export const CyclePayoutPage = () => {
       </main>
 
       {/* Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 safe-area">
-        <div className="max-w-3xl mx-auto flex gap-3 sm:gap-4">
-          <Button variant="outline" className="flex-1 text-sm sm:text-base" onClick={() => navigate(-1)}>
+      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 safe-area">
+        <div className="max-w-3xl mx-auto flex gap-2 sm:gap-4">
+          <Button variant="outline" className="flex-1 h-10 sm:h-11 text-xs sm:text-base" onClick={() => navigate(-1)}>
             Cancel
           </Button>
-          <Button className="flex-[2] bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base" onClick={() => setShowConfirmDialog(true)} disabled={isSaving}>
-            {isSaving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-            <span className="hidden sm:inline">Finalize & Export PDF</span>
-            <span className="sm:hidden">Finalize</span>
+          <Button className="flex-[2] h-10 sm:h-11 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-base" onClick={() => setShowConfirmDialog(true)} disabled={isSaving}>
+            {isSaving ? <Loader2 className="animate-spin mr-1 sm:mr-2 h-4 w-4" /> : <CheckCircle className="mr-1 sm:mr-2 h-4 w-4" />}
+            <span className="truncate">Finalize</span>
           </Button>
         </div>
       </div>
