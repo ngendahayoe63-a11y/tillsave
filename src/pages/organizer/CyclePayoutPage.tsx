@@ -218,12 +218,34 @@ export const CyclePayoutPage = () => {
           </div>
         )}
 
+        {/* Organizer Earnings Card */}
+        <Card className="bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-900/30">
+          <CardHeader>
+            <CardTitle className="text-amber-900 dark:text-amber-300">Your Earnings (1-Day Fees)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {Object.entries(totals.fees).map(([currency, amount]) => (
+                <div key={currency} className="flex justify-between items-center">
+                  <span className="text-sm text-amber-800 dark:text-amber-200">{currency}</span>
+                  <span className="text-lg font-bold text-amber-900 dark:text-amber-400">
+                    {(amount as number).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-4 pt-4 border-t border-amber-200 dark:border-amber-900/30">
+              💡 Tip: Each member contributes 1 day's savings as organizer fee for managing the group
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Warning Card */}
         <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-900/30">
           <CardContent className="p-4 flex gap-3">
             <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 shrink-0" />
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              All members receive their full contributions. Review amounts below carefully before finalizing.
+              All members receive their full contributions minus 1 day as organizer fee. Review amounts below carefully before finalizing.
             </p>
           </CardContent>
         </Card>
@@ -242,11 +264,14 @@ export const CyclePayoutPage = () => {
                     </div>
                   </div>
                   <div className="text-right">
+                    <div className="text-xs text-gray-500 mb-1">
+                      Saved: {item.totalSaved.toLocaleString()} {item.currency}
+                    </div>
+                    <div className="text-xs text-red-500 mb-2">
+                      - Fee: {item.organizerFee.toLocaleString()} {item.currency}
+                    </div>
                     <div className="text-xl font-bold text-green-700 dark:text-green-400">
                       {item.netPayout.toLocaleString()} <span className="text-xs text-gray-500">{item.currency}</span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Saved: {item.totalSaved.toLocaleString()} {item.currency}
                     </div>
                   </div>
                 </CardContent>

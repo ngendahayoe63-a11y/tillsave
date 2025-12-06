@@ -115,17 +115,28 @@ export const payoutService = {
         currencyGroups[p.currency] += p.amount;
       });
       
+      // Get daily rates for fee calculation
+      const { data: rates } = await supabase
+        .from('member_currency_rates')
+        .select('*')
+        .eq('membership_id', member.id)
+        .eq('is_active', true);
+      
       for (const [currency, total] of Object.entries(currencyGroups)) {
         const days = new Set(safePayments.filter(p => p.currency === currency).map(p => p.payment_date)).size;
+        const rateObj = rates?.find(r => r.currency === currency);
+        const dailyRate = rateObj ? rateObj.daily_rate : 0;
+        
         const userName = (member.users as any)?.name || 'Unknown';
-        // NO FEES deducted from members - they get full contributions
+        const organizerFee = dailyRate; // 1 day's contribution = organizer fee
+        
         payoutItems.push({
           membershipId: member.id,
           memberName: userName,
           currency,
           totalSaved: total,
-          organizerFee: 0,
-          netPayout: total,
+          organizerFee: organizerFee,
+          netPayout: total - organizerFee,
           daysContributed: days
         });
       }

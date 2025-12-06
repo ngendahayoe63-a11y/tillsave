@@ -139,21 +139,6 @@ export const dashboardService = {
         totalEarnings['RWF'] += p.organizer_fee_total_rwf || 0;
       });
 
-      // Calculate organizer commission (1.5% of total managed) for display
-      // This is in addition to any payout-based earnings
-      const commissionRate = 0.015; // 1.5%
-      let commissionEarnings = 0;
-      Object.entries(totalManaged).forEach(([currency, total]) => {
-        if (currency === 'RWF') {
-          commissionEarnings += (total as number) * commissionRate;
-        }
-      });
-      
-      // Add commission to total earnings (if it's more than recorded payout fees)
-      if (commissionEarnings > (totalEarnings['RWF'] || 0)) {
-        totalEarnings['RWF'] = Math.round(commissionEarnings);
-      }
-
       // 7. Get payments with group_id to calculate per-group totals
       const { data: allPaymentsWithGroup, error: allPaymentsGroupError } = await supabase
         .from('payments')
