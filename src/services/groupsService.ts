@@ -49,9 +49,16 @@ export const groupsService = {
           status: 'ACTIVE',
           joined_at: new Date().toISOString()
         });
-    } catch (memberError) {
+    } catch (memberError: any) {
+      // Log the specific error for debugging
       console.error('Error adding organizer as member:', memberError);
-      // Continue anyway - group was created successfully
+      // If it's a duplicate key error, that's fine - membership already exists
+      if (memberError?.code === '23505') {
+        console.log('Organizer membership already exists, continuing');
+      } else {
+        // For other errors, still continue as group was created successfully
+        console.warn('Membership insert failed but group created. User may not be able to save immediately.');
+      }
     }
 
     return group;

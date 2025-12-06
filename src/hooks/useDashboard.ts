@@ -22,7 +22,9 @@ export const useOrganizerDashboard = (organizerId: string | undefined) => {
         const result = await dashboardService.getOrganizerDashboard(organizerId);
         setData(result);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to load dashboard'));
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load organizer dashboard';
+        console.error('Organizer dashboard error:', err);
+        setError(new Error(errorMessage));
       } finally {
         setIsLoading(false);
       }
@@ -55,7 +57,9 @@ export const useMemberDashboard = (userId: string | undefined) => {
         const result = await dashboardService.getMemberDashboard(userId);
         setData(result);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to load dashboard'));
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load member dashboard';
+        console.error('Member dashboard error:', err);
+        setError(new Error(errorMessage));
       } finally {
         setIsLoading(false);
       }

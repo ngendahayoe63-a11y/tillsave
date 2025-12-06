@@ -173,7 +173,7 @@ export const OrganizerDashboard = () => {
             {/* Quick Actions */}
             <Card className="dark:bg-slate-900 border-none shadow-md">
               <CardHeader>
-                <CardTitle className="text-sm uppercase tracking-wider text-gray-500">Quick Actions</CardTitle>
+                <CardTitle className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Link to="/organizer/create-group">
@@ -188,6 +188,36 @@ export const OrganizerDashboard = () => {
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Recent Activities */}
+            {dashboardData?.recentPayments && dashboardData.recentPayments.length > 0 && (
+              <Card className="dark:bg-slate-900 border-none shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {dashboardData.recentPayments.slice(0, 5).map((payment: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                          {payment.memberships?.users?.name || 'Member'} saved
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(payment.payment_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400 whitespace-nowrap ml-2">
+                          {payment.amount.toLocaleString()} {payment.currency}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
           </div>
         </div>

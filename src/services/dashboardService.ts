@@ -75,7 +75,15 @@ export const dashboardService = {
 
       if (payoutsError) throw payoutsError;
 
-      // 4. Get recent payments
+      // 4. Get all payments for total calculation
+      const { data: allPaymentsForTotal, error: allPaymentsError } = await supabase
+        .from('payments')
+        .select('id, amount, currency')
+        .in('group_id', groupIds);
+
+      if (allPaymentsError) throw allPaymentsError;
+
+      // 4b. Get recent payments for display
       const { data: recentPayments, error: paymentsError } = await supabase
         .from('payments')
         .select(`
@@ -121,7 +129,7 @@ export const dashboardService = {
       const totalManaged: Record<string, number> = {};
       const totalEarnings: Record<string, number> = {};
 
-      recentPayments?.forEach(p => {
+      allPaymentsForTotal?.forEach(p => {
         if (!totalManaged[p.currency]) totalManaged[p.currency] = 0;
         totalManaged[p.currency] += p.amount;
       });
@@ -261,6 +269,88 @@ export const dashboardService = {
     } catch (error) {
       console.error('Error loading group dashboard:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Get recent activities for organizer dashboard
+   */
+  getOrganizerRecentActivities: async (organizerId: string, limit: number = 10) => {
+    try {
+      // Get organizer's groups
+      const { data: groups } = await supabase
+        .from('groups')
+        .select('id')
+        .eq('organizer_id', organizerId);
+
+      if (!groups || groups.length === 0) return [];
+
+      const groupIds = groups.map(g => g.id);
+
+      // Get recent payments from all groups
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select(`
+          id, amount, currency, payment_date,
+          memberships(user_id, users(name))
+        `)
+        .in('group_id', groupIds)
+        .order('payment_date', { ascending: false })
+        .limit(limit);
+
+      if (paymentsError) throw paymentsError;
+
+      return (payments || []).map(p => ({
+        id: p.id,
+        type: 'payment' as const,
+        title: `${(p.memberships as any)?.users?.name || 'Member'} saved`,
+        description: `${p.amount.toLocaleString()} ${p.currency}`,
+        timestamp: p.payment_date,
+        icon: '💳'
+      }));
+    } catch (error) {
+      console.error('Error loading organizer activities:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get recent activities for member dashboard
+   */
+  getMemberRecentActivities: async (userId: string, limit: number = 10) => {
+    try {
+      // Get member's memberships
+      const { data: memberships } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'ACTIVE');
+
+      if (!memberships || memberships.length === 0) return [];
+
+      const membershipIds = memberships.map(m => m.id);
+
+      // Get recent payments
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('id, amount, currency, payment_date')
+        .in('membership_id', membershipIds)
+        .order('payment_date', { ascending: false })
+        .limit(limit);
+
+      if (paymentsError) throw paymentsError;
+
+      return (payments || []).map(p => ({
+        id: p.id,
+        type: 'payment' as const,
+        title: 'Payment made',
+        description: `${p.amount.toLocaleString()} ${p.currency}`,
+        timestamp: p.payment_date,
+        icon: '✅'
+      }));
+    } catch (error) {
+      console.error('Error loading member activities:', error);
+      return [];
     }
   }
 };

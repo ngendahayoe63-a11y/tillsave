@@ -2,11 +2,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, PiggyBank, Target, TrendingUp, AlertCircle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity } from 'lucide-react';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 
 export const MemberDashboard = () => {
@@ -163,6 +163,36 @@ export const MemberDashboard = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Recent Activities */}
+            {dashboardData?.payments && dashboardData.payments.length > 0 && (
+              <Card className="dark:bg-slate-900 shadow-sm border-b-4 border-b-green-400">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {dashboardData.payments.slice(0, 5).map((payment: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Payment made ✅
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(payment.payment_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400 whitespace-nowrap ml-2">
+                          {payment.amount.toLocaleString()} {payment.currency}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* My Groups (Right 2/3) */}

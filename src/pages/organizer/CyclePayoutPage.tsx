@@ -180,14 +180,15 @@ export const CyclePayoutPage = () => {
       </main>
 
       {/* Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-3xl mx-auto flex gap-4">
-          <Button variant="outline" className="flex-1" onClick={() => navigate(-1)}>
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 safe-area">
+        <div className="max-w-3xl mx-auto flex gap-3 sm:gap-4">
+          <Button variant="outline" className="flex-1 text-sm sm:text-base" onClick={() => navigate(-1)}>
             Cancel
           </Button>
-          <Button className="flex-[2] bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowConfirmDialog(true)} disabled={isSaving}>
-            {isSaving ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-            Finalize & Export PDF
+          <Button className="flex-[2] bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base" onClick={() => setShowConfirmDialog(true)} disabled={isSaving}>
+            {isSaving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+            <span className="hidden sm:inline">Finalize & Export PDF</span>
+            <span className="sm:hidden">Finalize</span>
           </Button>
         </div>
       </div>

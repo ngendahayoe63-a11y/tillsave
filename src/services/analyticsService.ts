@@ -27,10 +27,78 @@ export const analyticsService = {
     return { totalGroups: groups.length, totalMembers: memberCount || 0, totalManaged, totalEarnings };
   },
 
-  getGroupAnalytics: async () => {
-     // (Keep previous implementation)
-     // ...
-     return { totalSavings: {}, organizerEarnings: {}, completionRate: 0, missedPayments: 0, chartData: [], memberCount: 0 };
+  getGroupAnalytics: async (groupId: string) => {
+    const { data: group } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('id', groupId)
+      .single();
+
+    if (!group) throw new Error('Group not found');
+
+    // Get current cycle dates
+    const cycleStart = new Date(group.current_cycle_start_date);
+    const cycleEnd = addDays(cycleStart, group.cycle_days);
+
+    // 1. Get total savings (all payments in this cycle)
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('amount, currency, membership_id')
+      .eq('group_id', groupId)
+      .gte('payment_date', cycleStart.toISOString())
+      .lte('payment_date', cycleEnd.toISOString());
+
+    const totalSavings: Record<string, number> = {};
+    payments?.forEach(p => {
+      if (!totalSavings[p.currency]) totalSavings[p.currency] = 0;
+      totalSavings[p.currency] += p.amount;
+    });
+
+    // 2. Get members
+    const { data: memberships } = await supabase
+      .from('memberships')
+      .select('id, users(id, name)')
+      .eq('group_id', groupId)
+      .eq('status', 'ACTIVE');
+
+    const memberCount = memberships?.length || 0;
+
+    // 3. Get organizer earnings (from rates)
+    const { data: rates } = await supabase
+      .from('member_currency_rates')
+      .select('*')
+      .eq('is_active', true);
+
+    const organizerEarnings: Record<string, number> = {};
+    const activeMemberIds = new Set(payments?.map(p => p.membership_id));
+
+    activeMemberIds.forEach(memId => {
+      const memRates = rates?.filter(r => r.membership_id === memId) || [];
+      memRates.forEach(rate => {
+        if (!organizerEarnings[rate.currency]) organizerEarnings[rate.currency] = 0;
+        organizerEarnings[rate.currency] += rate.daily_rate;
+      });
+    });
+
+    // 4. Chart data by member
+    const chartData = (memberships || []).map(m => {
+      const memberPayments = payments?.filter(p => p.membership_id === m.id) || [];
+      const total = memberPayments.reduce((sum, p) => sum + p.amount, 0);
+      const userData = Array.isArray(m.users) ? m.users[0] : m.users;
+      return {
+        name: userData?.name || 'Unknown Member',
+        value: total
+      };
+    }).filter(d => d.value > 0);
+
+    return {
+      totalSavings,
+      organizerEarnings,
+      completionRate: memberships ? ((payments?.length || 0) / (memberCount * group.cycle_days)) * 100 : 0,
+      missedPayments: Math.max(0, (memberCount * group.cycle_days) - (payments?.length || 0)),
+      chartData,
+      memberCount
+    };
   },
 
   getMemberAnalytics: async () => {

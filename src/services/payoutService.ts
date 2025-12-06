@@ -82,7 +82,7 @@ export const payoutService = {
     if (!group) throw new Error("Group not found");
     const start = new Date(group.current_cycle_start_date);
     const end = new Date();
-    const analytics = await analyticsService.getGroupAnalytics();
+    const analytics = await analyticsService.getGroupAnalytics(groupId);
     if (!analytics) throw new Error("Could not calculate analytics");
     const { data: members } = await supabase.from('memberships').select('id, users(name)').eq('group_id', groupId).eq('status', 'ACTIVE');
     if (!members) return [];

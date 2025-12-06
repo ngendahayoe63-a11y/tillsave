@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useGroupsStore } from '@/store/groupsStore';
+import { useToast } from '@/components/ui/toast';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ export const CreateGroupPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { addGroup } = useGroupsStore();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,9 +35,18 @@ export const CreateGroupPage = () => {
       );
       
       addGroup(newGroup);
+      addToast({
+        type: 'success',
+        title: 'Group created',
+        description: `${formData.name} has been created successfully`,
+      });
       navigate('/organizer');
     } catch (error: any) {
-      alert(error.message);
+      addToast({
+        type: 'error',
+        title: 'Failed to create group',
+        description: error.message,
+      });
     } finally {
       setIsLoading(false);
     }

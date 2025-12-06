@@ -23,7 +23,7 @@ export const AdvancedReportPage = () => {
         const group = await groupsService.getGroupDetails(groupId);
         setGroupName(group.name);
 
-        const data = await analyticsService.getGroupAnalytics();
+        const data = await analyticsService.getGroupAnalytics(groupId);
         setStats(data);
       } catch (error) {
         console.error(error);
