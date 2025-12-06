@@ -153,7 +153,7 @@ export const OrganizerDashboard = () => {
 
             {/* Groups Grid */}
             {filteredGroups.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredGroups.map(group => (
                   <GroupCard key={group.id} group={group} role="ORGANIZER" />
                 ))}
@@ -246,7 +246,7 @@ export const OrganizerDashboard = () => {
         {dashboardData?.groups && dashboardData.groups.length > 0 && (
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Group Cycles</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {dashboardData.groups.map((group: any) => {
                 // Get paid days for this group from recent payments
                 const groupPayments = dashboardData.recentPayments.filter(

@@ -124,7 +124,7 @@ export const MemberDashboard = () => {
                 </div>
                 
                 {/* Score Details */}
-                <div className="flex-1 w-full grid grid-cols-2 gap-4">
+                <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <p className="text-xs text-gray-500 uppercase font-semibold">Status</p>
                     <p className="text-green-600 font-bold flex items-center gap-1">
@@ -334,7 +334,7 @@ export const MemberDashboard = () => {
             </div>
 
             {dashboardData?.memberships && dashboardData.memberships.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dashboardData.memberships.map((membership: any) => {
                   const transformedData = transformMembershipData(membership, dashboardData.payments);
                   if (!transformedData) return null; // Skip if transformation fails
@@ -359,7 +359,7 @@ export const MemberDashboard = () => {
         {dashboardData?.memberships && dashboardData.memberships.length > 0 && (
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle Progress</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {dashboardData.memberships.map((membership: any) => {
                 const group = membership.groups;
                 if (!group) return null;
