@@ -2,6 +2,8 @@
 
 **Send this when you invite organizers**
 
+> **First time organizing?** Have them read [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) →
+
 ---
 
 ## EMAIL VERSION 1: Personal (Recommended)
@@ -22,7 +24,7 @@ Welcome to TillSave! We're excited to have you manage savings with us.
 
 2. **Sign up in 2 minutes**
    - Phone number → OTP verification → PIN (write it down!) → Done
-   - Need help? See checklist below
+   - Need help? See link below
 
 3. **Create your group**
    - Group name (e.g., "Monday Savings Circle")
@@ -59,17 +61,23 @@ Welcome to TillSave! We're excited to have you manage savings with us.
 
 ---
 
-**Quick Reference**:
-- 📱 **App**: Download now
-- 📖 **FAQ**: Read before starting (20 common questions answered)
-- ✅ **Checklist**: Follow step-by-step for first cycle
-- 📞 **Help**: Contact us anytime
+**Documentation Attached**:
+- 📖 **Quick Start Guide** - 5 minute setup (01-ORGANIZER_QUICK_START.md)
+- ✅ **Checklist** - Step-by-step weekly tasks (02-ORGANIZER_CHECKLIST.md)
+- ❓ **FAQ** - 20 common questions answered (03-ORGANIZER_FAQ.md)
+
+---
+
+**Video Tutorials Coming Soon**:
+- Watch how to record a payment (3 min)
+- Understand your payout report (3 min)
+- Start your next cycle (2 min)
 
 ---
 
 **Questions?**
 
-Check the FAQ document (attached) or reply to this email.
+Check the FAQ document first (most questions are answered there) or reply to this email.
 
 **Ready to launch?**
 
@@ -153,17 +161,18 @@ Thank you for partnering with TillSave. We're providing a digital solution for c
 
 **Documentation Provided**:
 
-1. **FAQ Document** - 20 common questions answered
-2. **Organizer Checklist** - Step-by-step setup guide
-3. **Video Tutorials** - How to record payments, finalize payouts (links provided)
-4. **Technical Support** - 24-hour response time
+1. **Quick Start Guide** - 5 minute setup (01-ORGANIZER_QUICK_START.md)
+2. **Organizer Checklist** - Step-by-step setup guide (02-ORGANIZER_CHECKLIST.md)
+3. **FAQ Document** - 20 common questions (03-ORGANIZER_FAQ.md)
+4. **Video Tutorials** - How to record payments, finalize payouts (links provided)
+5. **Technical Support** - 24-hour response time
 
 ---
 
 **Next Steps**:
 
 1. Download the app from [link]
-2. Review the enclosed FAQ and Checklist
+2. Review the enclosed documentation
 3. Test with your team first
 4. Set launch date with us
 5. We'll monitor first cycle for support
@@ -278,8 +287,9 @@ Questions? Just ask!
 ```
 ☐ Email body (choose a version above)
 ☐ App download link (will provide)
-☐ FAQ.md attachment
-☐ ORGANIZER_CHECKLIST.md attachment
+☐ Attachment: 01-ORGANIZER_QUICK_START.md
+☐ Attachment: 02-ORGANIZER_CHECKLIST.md
+☐ Attachment: 03-ORGANIZER_FAQ.md
 ☐ Your contact info for questions
 ☐ Your group code (when they ask)
 ```
@@ -322,3 +332,7 @@ Choose a template, customize with your details, and send!
 **Status**: Ready to customize & send  
 **Version**: 1.0  
 **Last Updated**: December 6, 2025
+
+---
+
+📍 **Navigation**: [00-README.md](00-README.md) ← Go back to index

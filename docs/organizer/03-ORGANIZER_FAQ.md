@@ -1,8 +1,11 @@
 # TillSave FAQ - Organizer Guide
 
 **Version**: 1.0  
-**Date**: December 6, 2025  
+**Last Updated**: December 6, 2025  
 **Audience**: Organizers using TillSave
+
+> **First time?** Start with [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) →
+> **Step-by-step guide?** See [02-ORGANIZER_CHECKLIST.md](02-ORGANIZER_CHECKLIST.md) →
 
 ---
 
@@ -97,6 +100,8 @@
    - ✅ Payment saved! Members see it instantly
 
 **Tip**: Record payments daily or after you receive them. This keeps records accurate.
+
+> For detailed guide, see [02-ORGANIZER_CHECKLIST.md](02-ORGANIZER_CHECKLIST.md) - Week 1-2
 
 ---
 
@@ -195,6 +200,8 @@ Cycle 2: Dec 31 - Jan 29
 ↓ (Jan 29: Start Cycle 3)
 Cycle 3: Jan 30 - Feb 28
 ```
+
+> For detailed end-of-cycle process, see [02-ORGANIZER_CHECKLIST.md](02-ORGANIZER_CHECKLIST.md) - Week 3-4
 
 ---
 
@@ -521,7 +528,8 @@ Member C (UK):
 **We're Here to Help!**
 
 This FAQ covers the top 20 questions. If you have more:
-- Check the in-app help section
+- Check the [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) for beginners
+- Check [02-ORGANIZER_CHECKLIST.md](02-ORGANIZER_CHECKLIST.md) for detailed guide
 - Ask in the organizer community (coming soon)
 - Contact support
 
@@ -535,4 +543,4 @@ This FAQ covers the top 20 questions. If you have more:
 
 **Status**: Complete & Ready  
 **Last Updated**: December 6, 2025  
-**Next Step**: Read before inviting organizers
+**Next Step**: [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) or [02-ORGANIZER_CHECKLIST.md](02-ORGANIZER_CHECKLIST.md)

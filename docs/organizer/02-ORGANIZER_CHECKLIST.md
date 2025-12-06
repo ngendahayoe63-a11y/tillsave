@@ -2,6 +2,9 @@
 
 **Print this and follow step-by-step!**
 
+> **First time?** Start with [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) first.
+> **Have questions?** Check [03-ORGANIZER_FAQ.md](03-ORGANIZER_FAQ.md)
+
 ---
 
 ## ✅ Week 1: Setup (Day 1-2)
@@ -163,31 +166,29 @@ From celebration screen:
 - [ ] Check spelling (case-insensitive)
 - [ ] They need to: Menu → Join Group → Enter code
 - [ ] Have them try again
-- [ ] Contact support if still fails
+- [ ] → See [03-ORGANIZER_FAQ.md](03-ORGANIZER_FAQ.md) Q2
 
 ### "Payment recorded but member says they didn't pay"
 - [ ] Ask them when they think they paid
 - [ ] Check if date is correct
 - [ ] Ask if it's the right amount
-- [ ] You can't delete yet, but contact support to adjust
+- [ ] → See [03-ORGANIZER_FAQ.md](03-ORGANIZER_FAQ.md) Q5
 
 ### "App says 'syncing' forever"
 - [ ] Check internet connection
 - [ ] Wait 5 minutes
 - [ ] Restart app if needed
-- [ ] Data is safe locally, will sync when ready
+- [ ] → See [03-ORGANIZER_FAQ.md](03-ORGANIZER_FAQ.md) Q18
 
 ### "I forgot my PIN"
-- [ ] You: Click "Forgot PIN" on login
+- [ ] Click "Forgot PIN" on login
 - [ ] Verify phone number with OTP
 - [ ] Create new PIN
-- [ ] Members: Same process for their account
 
 ### "Can't see a member's payment history"
 - [ ] Go to group
 - [ ] Click on member name
 - [ ] Their payment history shows
-- [ ] Click payment to see details
 
 ---
 
@@ -222,12 +223,12 @@ Easy, transparent, secure."
 ## 📞 Getting Help
 
 ### Before Starting
-- [ ] Read FAQ document (answers 20 top questions)
+- [ ] Read [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) (5 min)
 - [ ] Review this checklist
 - [ ] Test app with one friend first
 
 ### If You Get Stuck
-- [ ] Check FAQ
+- [ ] Check [03-ORGANIZER_FAQ.md](03-ORGANIZER_FAQ.md)
 - [ ] Take screenshot of problem
 - [ ] Note what you were doing
 - [ ] Contact support with details
@@ -263,6 +264,14 @@ Day 30: Start Cycle 2
 - ✅ Started cycle 2
 
 **After 3 months, you'll be a pro!**
+
+---
+
+## 📖 Need More Info?
+
+- [01-ORGANIZER_QUICK_START.md](01-ORGANIZER_QUICK_START.md) - First 5 minutes
+- [03-ORGANIZER_FAQ.md](03-ORGANIZER_FAQ.md) - Answer any question
+- Watch videos (links in welcome email)
 
 ---
 
