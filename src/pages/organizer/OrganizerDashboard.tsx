@@ -17,6 +17,7 @@ export const OrganizerDashboard = () => {
   const { user } = useAuthStore();
   const { data: dashboardData, isLoading, error } = useOrganizerDashboard(user?.id);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   // Helper to render currencies
   const renderCurrencyLine = (data: Record<string, number> | undefined) => {
@@ -198,7 +199,7 @@ export const OrganizerDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {dashboardData.recentPayments.slice(0, 5).map((payment: any, idx: number) => (
+                  {(showAllActivities ? dashboardData.recentPayments : dashboardData.recentPayments.slice(0, 5)).map((payment: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
@@ -215,6 +216,24 @@ export const OrganizerDashboard = () => {
                       </div>
                     </div>
                   ))}
+                  {!showAllActivities && dashboardData.recentPayments.length > 5 && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-2"
+                      onClick={() => setShowAllActivities(true)}
+                    >
+                      View All Activities ({dashboardData.recentPayments.length})
+                    </Button>
+                  )}
+                  {showAllActivities && dashboardData.recentPayments.length > 5 && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mt-2"
+                      onClick={() => setShowAllActivities(false)}
+                    >
+                      Show Less
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )}
