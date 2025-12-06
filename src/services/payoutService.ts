@@ -268,11 +268,18 @@ export const payoutService = {
       throw itemsError;
     }
     
+    // CRITICAL: Set current_cycle_start_date to tomorrow (not today) to ensure
+    // the new cycle doesn't include any data from the finalized cycle.
+    // This prevents showing old cycle data when previewing the next cycle.
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // Set to midnight
+    
     const { error: updateError } = await supabase
       .from('groups')
       .update({
         current_cycle: currentCycle + 1,
-        current_cycle_start_date: new Date().toISOString()
+        current_cycle_start_date: tomorrow.toISOString()
       })
       .eq('id', groupId);
     
@@ -287,10 +294,10 @@ export const payoutService = {
 
   /**
    * START NEXT CYCLE: Create a new cycle after payout finalized
+   * NOTE: startNextCycle should not be needed since finalizePayout already updates the cycle.
+   * Keeping it for backward compatibility and manual cycle advancement if needed.
    */
   startNextCycle: async (groupId: string) => {
-    const today = new Date().toISOString();
-    
     // Get current cycle number
     const { data: group, error: groupError } = await supabase
       .from('groups')
@@ -304,18 +311,24 @@ export const payoutService = {
     const currentCycle = group?.cycle_number || group?.current_cycle || 1;
     const nextCycle = currentCycle + 1;
     
+    // Set start date to tomorrow (midnight) to ensure new cycle starts fresh
+    // and doesn't include any data from the previous finalized cycle
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // Set to midnight
+    
     // Update group with new cycle
     const { error: updateError } = await supabase
       .from('groups')
       .update({
         current_cycle: nextCycle,
         cycle_number: nextCycle,
-        current_cycle_start_date: today,
+        current_cycle_start_date: tomorrow.toISOString(),
         status: 'ACTIVE'
       })
       .eq('id', groupId);
     
     if (updateError) throw updateError;
-    return { cycleNumber: nextCycle, startDate: today };
+    return { cycleNumber: nextCycle, startDate: tomorrow.toISOString() };
   }
 };
