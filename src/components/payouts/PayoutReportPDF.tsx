@@ -19,7 +19,8 @@ interface PayoutReportProps {
   generatedDate: Date;
   members: Member[];
   organizerName: string;
-  organizerPhone: string;
+  organizerPhone?: string;
+  organizerEmail?: string;
   organizerEarnings: {
     currency: string;
     amount: number;
@@ -36,6 +37,7 @@ export const PayoutReportPDF: React.FC<PayoutReportProps> = ({
   members,
   organizerName,
   organizerPhone,
+  organizerEmail,
   organizerEarnings,
   reportId,
 }) => {
@@ -199,8 +201,9 @@ export const PayoutReportPDF: React.FC<PayoutReportProps> = ({
           </div>
           <div style={styles.earningsBox}>
             <p style={styles.earningsLabel}>Organizer Details</p>
-            <p style={styles.earningsDetail}>Name: {organizerName}</p>
-            <p style={styles.earningsDetail}>Phone: {organizerPhone}</p>
+            <p style={styles.earningsDetail}>Name: {organizerName || 'Unknown'}</p>
+            <p style={styles.earningsDetail}>Phone: {organizerPhone || 'N/A'}</p>
+            <p style={styles.earningsDetail}>Email: {organizerEmail || 'N/A'}</p>
           </div>
         </div>
       </div>
@@ -281,11 +284,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontFamily: "'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     maxWidth: '210mm',
     margin: '0 auto',
-    padding: '20mm',
+    padding: 'clamp(10px, 5vw, 20mm)',
     backgroundColor: '#ffffff',
     color: '#1f2937',
-    fontSize: '10pt',
+    fontSize: 'clamp(9pt, 2vw, 10pt)',
     lineHeight: '1.5',
+    boxSizing: 'border-box' as const,
+    width: '100%',
   },
   header: {
     display: 'flex',
@@ -305,14 +310,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '36px',
   },
   companyName: {
-    fontSize: '24px',
+    fontSize: 'clamp(18px, 6vw, 24px)',
     fontWeight: '700',
     color: '#2563eb',
     margin: '0',
     lineHeight: '1.2',
   },
   tagline: {
-    fontSize: '11px',
+    fontSize: 'clamp(9px, 2vw, 11px)',
     color: '#6b7280',
     margin: '4px 0 0 0',
   },
@@ -320,7 +325,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: 'right' as const,
   },
   reportTitle: {
-    fontSize: '20px',
+    fontSize: 'clamp(14px, 5vw, 20px)',
     fontWeight: '700',
     color: '#1f2937',
     margin: '0 0 8px 0',
@@ -345,7 +350,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '24px',
   },
   sectionTitle: {
-    fontSize: '14px',
+    fontSize: 'clamp(12px, 3.5vw, 14px)',
     fontWeight: '700',
     color: '#1f2937',
     marginBottom: '12px',
@@ -355,7 +360,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   infoGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
+    gap: 'clamp(8px, 2vw, 12px)',
   },
   infoItem: {
     display: 'flex',
@@ -371,8 +376,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   statsContainer: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
-    gap: '16px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+    gap: 'clamp(8px, 2vw, 16px)',
     marginBottom: '24px',
   },
   statCard: {
@@ -413,9 +418,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#ffffff',
   },
   tableHeader: {
-    padding: '12px 8px',
+    padding: 'clamp(6px, 1.5vw, 12px) clamp(4px, 1vw, 8px)',
     textAlign: 'center' as const,
-    fontSize: '10px',
+    fontSize: 'clamp(8px, 1.8vw, 10px)',
     fontWeight: '600',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.5px',
@@ -427,9 +432,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#f9fafb',
   },
   tableCell: {
-    padding: '10px 8px',
+    padding: 'clamp(6px, 1.5vw, 10px) clamp(4px, 1vw, 8px)',
     textAlign: 'center' as const,
-    fontSize: '10px',
+    fontSize: 'clamp(7px, 1.8vw, 10px)',
     borderBottom: '1px solid #e5e7eb',
   },
   tableTotalRow: {
@@ -445,29 +450,29 @@ const styles: { [key: string]: React.CSSProperties } = {
   earningsContainer: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
+    gap: 'clamp(8px, 2vw, 16px)',
   },
   earningsBox: {
     backgroundColor: '#fef3c7',
     border: '2px solid #fbbf24',
     borderRadius: '8px',
-    padding: '16px',
+    padding: 'clamp(8px, 2vw, 16px)',
   },
   earningsLabel: {
-    fontSize: '11px',
+    fontSize: 'clamp(9px, 2vw, 11px)',
     color: '#78350f',
     fontWeight: '600',
     marginBottom: '8px',
     textTransform: 'uppercase' as const,
   },
   earningsValue: {
-    fontSize: '18px',
+    fontSize: 'clamp(14px, 3.5vw, 18px)',
     fontWeight: '700',
     color: '#78350f',
     margin: '4px 0',
   },
   earningsDetail: {
-    fontSize: '10px',
+    fontSize: 'clamp(8px, 1.8vw, 10px)',
     color: '#78350f',
     margin: '4px 0',
   },

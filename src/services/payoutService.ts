@@ -11,6 +11,20 @@ export interface PayoutItem {
 }
 
 export const payoutService = {
+  /**
+   * Get organizer details for report (name, email, phone)
+   */
+  getOrganizerDetails: async (organizerId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, email, phone')
+      .eq('id', organizerId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
   // ... (Keep previewCyclePayout and finalizePayout exactly as they were)
   
   // --- PASTE THIS BELOW THE EXISTING FUNCTIONS ---

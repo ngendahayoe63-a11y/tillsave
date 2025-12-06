@@ -63,13 +63,19 @@ export const dashboardService = {
 
       if (membershipsError) throw membershipsError;
 
-      // 3. Get earnings this month
+      // 3. Get earnings this month (organizer fees from actual payout records)
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
       const { data: payouts, error: payoutsError } = await supabase
         .from('payouts')
-        .select('id, group_id, organizer_fee_total_rwf, payout_date')
+        .select(`
+          id, 
+          group_id, 
+          organizer_fee_total_rwf, 
+          payout_date,
+          payout_items(organizer_fee, currency)
+        `)
         .in('group_id', groupIds)
         .gte('payout_date', monthStart.toISOString());
 
@@ -126,7 +132,7 @@ export const dashboardService = {
         .slice(0, 5)
         .map(p => ({ users: p.user, payment_count: p.count, total: p.total }));
 
-      // 6. Calculate totals
+      // 6. Calculate totals (including earnings by currency from payout items)
       const totalMembers = memberships?.length || 0;
       const totalManaged: Record<string, number> = {};
       const totalEarnings: Record<string, number> = {};
@@ -136,9 +142,13 @@ export const dashboardService = {
         totalManaged[p.currency] += p.amount;
       });
 
+      // Calculate earnings from actual payout_items (supports all currencies)
       payouts?.forEach(p => {
-        if (!totalEarnings['RWF']) totalEarnings['RWF'] = 0;
-        totalEarnings['RWF'] += p.organizer_fee_total_rwf || 0;
+        const payoutItems = (p.payout_items as any[]) || [];
+        payoutItems.forEach(item => {
+          if (!totalEarnings[item.currency]) totalEarnings[item.currency] = 0;
+          totalEarnings[item.currency] += item.organizer_fee || 0;
+        });
       });
       
       console.log('Total earnings calculated:', totalEarnings);
@@ -234,7 +244,7 @@ export const dashboardService = {
       // 3. Get member's active goals
       const { data: goals, error: goalsError } = await supabase
         .from('goals')
-        .select('id, name, target_amount, current_progress, target_date, currency, status')
+        .select('id, name, target_amount, current_progress, target_date, target_currency, status')
         .eq('user_id', userId)
         .eq('status', 'ACTIVE');
 

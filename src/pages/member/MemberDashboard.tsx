@@ -7,7 +7,7 @@ import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, differenceInCalendarDays } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 
 export const MemberDashboard = () => {
@@ -35,6 +35,60 @@ export const MemberDashboard = () => {
     const entries = Object.entries(dashboardData.totalSaved);
     if (entries.length === 0) return "0 RWF";
     return entries.map(([curr, val]) => `${(val as number).toLocaleString()} ${curr}`).join(' + ');
+  };
+
+  // Transform membership data to format expected by MemberGroupCard
+  const transformMembershipData = (membership: any, payments: any[]) => {
+    const group = membership.groups;
+    if (!group) return null;
+
+    const now = new Date();
+    const cycleStartDate = new Date(group.current_cycle_start_date);
+    const cycleEndDate = new Date(cycleStartDate);
+    cycleEndDate.setDate(cycleEndDate.getDate() + group.cycle_days);
+    
+    const daysRemaining = Math.max(0, differenceInCalendarDays(cycleEndDate, now));
+    const totalCycleDays = group.cycle_days;
+    const daysPassed = totalCycleDays - daysRemaining;
+    const progressPercent = Math.min(100, (daysPassed / totalCycleDays) * 100);
+
+    // Filter payments for this membership and group by currency
+    const membershipPayments = payments.filter(p => p.membership_id === membership.id);
+    const financialsByCurrency: Record<string, any> = {};
+
+    membershipPayments.forEach(payment => {
+      if (!financialsByCurrency[payment.currency]) {
+        financialsByCurrency[payment.currency] = {
+          currency: payment.currency,
+          saved: 0,
+          fee: 0,
+          net: 0
+        };
+      }
+      financialsByCurrency[payment.currency].saved += payment.amount;
+    });
+
+    // For now, assume no fees until cycle ends (simplified, can be enhanced later)
+    Object.values(financialsByCurrency).forEach((fin: any) => {
+      fin.fee = 0; // Fee calculated at cycle end by organizer
+      fin.net = fin.saved - fin.fee;
+    });
+
+    const financials = Object.values(financialsByCurrency);
+
+    return {
+      id: membership.id,
+      group: {
+        id: group.id,
+        name: group.name
+      },
+      cycle: {
+        current: group.current_cycle,
+        progressPercent,
+        daysRemaining
+      },
+      financials: financials.length > 0 ? financials : []
+    };
   };
 
   return (
@@ -158,7 +212,7 @@ export const MemberDashboard = () => {
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500">
-                      {dashboardData.goals[0].current_progress.toLocaleString()} / {dashboardData.goals[0].target_amount.toLocaleString()} {dashboardData.goals[0].currency}
+                      {dashboardData.goals[0].current_progress.toLocaleString()} / {dashboardData.goals[0].target_amount.toLocaleString()} {dashboardData.goals[0].target_currency}
                     </p>
                   </>
                 )}
@@ -211,9 +265,13 @@ export const MemberDashboard = () => {
 
             {dashboardData?.memberships && dashboardData.memberships.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {dashboardData.memberships.map((membership: any) => (
-                  <MemberGroupCard key={membership.id} data={membership} />
-                ))}
+                {dashboardData.memberships.map((membership: any) => {
+                  const transformedData = transformMembershipData(membership, dashboardData.payments);
+                  if (!transformedData) return null; // Skip if transformation fails
+                  return (
+                    <MemberGroupCard key={membership.id} data={transformedData} />
+                  );
+                })}
               </div>
             ) : (
               <EmptyState

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/toast';
+import { useAuthStore } from '@/store/authStore';
 import { payoutService, PayoutItem } from '@/services/payoutService';
 import { groupsService } from '@/services/groupsService';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ export const CyclePayoutPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user: currentUser } = useAuthStore();
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -25,14 +27,19 @@ export const CyclePayoutPage = () => {
   const [groupData, setGroupData] = useState<any>(null);
   const [payoutItems, setPayoutItems] = useState<PayoutItem[]>([]);
   const [totals, setTotals] = useState({ saved: {}, fees: {}, net: {} });
+  const [organizerDetails, setOrganizerDetails] = useState<any>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!groupId) return;
+      if (!groupId || !currentUser) return;
       try {
         const group = await groupsService.getGroupDetails(groupId);
         setGroupName(group.name);
         setGroupData(group);
+
+        // Fetch organizer details
+        const orgDetails = await payoutService.getOrganizerDetails(currentUser.id);
+        setOrganizerDetails(orgDetails);
 
         const items = await payoutService.previewCyclePayout(groupId);
         setPayoutItems(items);
@@ -62,7 +69,16 @@ export const CyclePayoutPage = () => {
       }
     };
     loadData();
-  }, [groupId]);
+  }, [groupId, currentUser]);
+
+  // Auto-open print dialog when finalized and preview is shown
+  useEffect(() => {
+    if (isFinalized && showPreview) {
+      setTimeout(() => {
+        window.print();
+      }, 800);
+    }
+  }, [isFinalized, showPreview]);
 
   const handleFinalize = async () => {
     if (!groupId) return;
@@ -82,12 +98,12 @@ export const CyclePayoutPage = () => {
       addToast({
         type: 'success',
         title: 'Payout finalized',
-        description: 'Cycle closed and all records saved successfully',
+        description: 'Cycle closed. Print preview will open to save as PDF.',
       });
 
-      // Auto-print PDF
+      // Show the finalized preview screen with print option
       setTimeout(() => {
-        window.print();
+        setShowPreview(true);
       }, 500);
     } catch (error: any) {
       addToast({
@@ -132,8 +148,9 @@ export const CyclePayoutPage = () => {
               totalDays: item.daysContributed,
               currency: item.currency
             }))}
-            organizerName={groupData?.organizer_name || 'Unknown'}
-            organizerPhone={groupData?.organizer_phone || 'N/A'}
+            organizerName={organizerDetails?.name || 'Unknown'}
+            organizerEmail={organizerDetails?.email || 'N/A'}
+            organizerPhone={organizerDetails?.phone || 'N/A'}
             organizerEarnings={Object.entries(totals.fees).map(([currency, amount]) => ({
               currency,
               amount: amount as number
@@ -186,8 +203,8 @@ export const CyclePayoutPage = () => {
         </Button>
 
         {showPreview && (
-          <div className="border-2 border-blue-300 rounded-lg p-4 bg-blue-50 dark:bg-blue-950 no-print">
-            <div className="mb-4 p-4 bg-white dark:bg-slate-900 rounded border border-blue-200 dark:border-blue-800">
+          <div className="border-2 border-blue-300 rounded-lg p-2 sm:p-4 bg-blue-50 dark:bg-blue-950 no-print overflow-x-auto">
+            <div className="mb-4 p-2 sm:p-4 bg-white dark:bg-slate-900 rounded border border-blue-200 dark:border-blue-800 min-w-full sm:min-w-0">
               <PayoutReportPDF
                 groupName={groupName}
                 cycleNumber={groupData?.current_cycle || 1}
@@ -203,8 +220,9 @@ export const CyclePayoutPage = () => {
                   totalDays: item.daysContributed,
                   currency: item.currency
                 }))}
-                organizerName={groupData?.organizer_name || 'Unknown'}
-                organizerPhone={groupData?.organizer_phone || 'N/A'}
+                organizerName={organizerDetails?.name || 'Unknown'}
+                organizerEmail={organizerDetails?.email || 'N/A'}
+                organizerPhone={organizerDetails?.phone || 'N/A'}
                 organizerEarnings={Object.entries(totals.fees).map(([currency, amount]) => ({
                   currency,
                   amount: amount as number
@@ -212,7 +230,7 @@ export const CyclePayoutPage = () => {
                 reportId={`RPT-${Date.now()}`}
               />
             </div>
-            <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
+            <p className="text-xs text-blue-700 dark:text-blue-300 text-center mt-2">
               Use print (Ctrl+P / Cmd+P) to save as PDF
             </p>
           </div>
@@ -282,8 +300,8 @@ export const CyclePayoutPage = () => {
 
       </main>
 
-      {/* Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 safe-area no-print">
+      {/* Footer Action - On mobile sits above BottomNav (64px), on desktop at actual bottom */}
+      <div className="fixed md:static left-0 right-0 p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 no-print z-40" style={{ bottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
         <div className="max-w-3xl mx-auto flex gap-2 sm:gap-4">
           <Button variant="outline" className="flex-1 h-10 sm:h-11 text-xs sm:text-base" onClick={() => navigate(-1)}>
             Cancel
