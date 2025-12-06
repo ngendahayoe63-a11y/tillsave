@@ -139,8 +139,34 @@ export const dashboardService = {
         totalEarnings['RWF'] += p.organizer_fee_total_rwf || 0;
       });
 
+      // 7. Get payments with group_id to calculate per-group totals
+      const { data: allPaymentsWithGroup, error: allPaymentsGroupError } = await supabase
+        .from('payments')
+        .select('id, amount, currency, group_id')
+        .in('group_id', groupIds);
+
+      if (allPaymentsGroupError) throw allPaymentsGroupError;
+
+      // 8. Enhance groups with member counts and totals per group
+      const enhancedGroups = groups.map((group: any) => {
+        const groupMembers = memberships?.filter(m => m.group_id === group.id) || [];
+        const groupPayments = allPaymentsWithGroup?.filter(p => p.group_id === group.id) || [];
+        
+        const groupTotals: Record<string, number> = {};
+        groupPayments.forEach(p => {
+          if (!groupTotals[p.currency]) groupTotals[p.currency] = 0;
+          groupTotals[p.currency] += p.amount;
+        });
+
+        return {
+          ...group,
+          memberships: groupMembers,
+          totalManaged: groupTotals
+        };
+      });
+
       return {
-        groups,
+        groups: enhancedGroups,
         totalMembers,
         totalManaged,
         totalEarnings,
