@@ -1,5 +1,4 @@
 import { supabase } from '@/api/supabase';
-import { analyticsService } from './analyticsService';
 
 export interface PayoutItem {
   membershipId: string;
@@ -78,29 +77,60 @@ export const payoutService = {
   // For brevity in this message, I assume you kept the top part of the file.
   // If you need the FULL file again, let me know.
   previewCyclePayout: async (groupId: string) => {
-    const { data: group } = await supabase.from('groups').select('current_cycle_start_date, cycle_days, user_id').eq('id', groupId).single();
-    if (!group) throw new Error("Group not found");
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('current_cycle_start_date, cycle_days, user_id')
+      .eq('id', groupId)
+      .single();
+    
+    if (groupError || !group) throw new Error("Group not found");
+    
     const start = new Date(group.current_cycle_start_date);
     const end = new Date();
-    const analytics = await analyticsService.getGroupAnalytics(groupId);
-    if (!analytics) throw new Error("Could not calculate analytics");
-    const { data: members } = await supabase.from('memberships').select('id, user_id, users:user_id(name)').eq('group_id', groupId).eq('status', 'ACTIVE');
+    
+    const { data: members } = await supabase
+      .from('memberships')
+      .select('id, user_id, users:user_id(name)')
+      .eq('group_id', groupId)
+      .eq('status', 'ACTIVE');
+    
     if (!members) return [];
+    
     const payoutItems: PayoutItem[] = [];
+    
     for (const member of members) {
-      const { data: payments } = await supabase.from('payments').select('amount, currency, payment_date').eq('membership_id', member.id).gte('payment_date', start.toISOString()).lte('payment_date', end.toISOString());
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, currency, payment_date')
+        .eq('membership_id', member.id)
+        .gte('payment_date', start.toISOString())
+        .lte('payment_date', end.toISOString());
+      
       const safePayments = payments || [];
       if (safePayments.length === 0) continue;
+      
       const currencyGroups: Record<string, number> = {};
-      safePayments.forEach(p => { if (!currencyGroups[p.currency]) currencyGroups[p.currency] = 0; currencyGroups[p.currency] += p.amount; });
+      safePayments.forEach(p => {
+        if (!currencyGroups[p.currency]) currencyGroups[p.currency] = 0;
+        currencyGroups[p.currency] += p.amount;
+      });
+      
       for (const [currency, total] of Object.entries(currencyGroups)) {
         const days = new Set(safePayments.filter(p => p.currency === currency).map(p => p.payment_date)).size;
         const userName = (member.users as any)?.name || 'Unknown';
-        // NO FEES are deducted from member payouts. All their contributions they get back.
-        // Organizer earnings are calculated separately from total fees pool
-        payoutItems.push({ membershipId: member.id, memberName: userName, currency, totalSaved: total, organizerFee: 0, netPayout: total, daysContributed: days });
+        // NO FEES deducted from members - they get full contributions
+        payoutItems.push({
+          membershipId: member.id,
+          memberName: userName,
+          currency,
+          totalSaved: total,
+          organizerFee: 0,
+          netPayout: total,
+          daysContributed: days
+        });
       }
     }
+    
     return payoutItems;
   },
 
