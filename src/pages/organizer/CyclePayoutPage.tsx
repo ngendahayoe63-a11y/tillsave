@@ -168,30 +168,32 @@ export const CyclePayoutPage = () => {
               </Button>
             </div>
           </div>
-          <PayoutReportPDF
-            groupName={groupName}
-            cycleNumber={groupData?.current_cycle || 1}
-            cycleStartDate={new Date(groupData?.current_cycle_start_date)}
-            cycleEndDate={new Date()}
-            generatedDate={new Date()}
-            members={payoutItems.map(item => ({
-              name: item.memberName,
-              totalSaved: item.totalSaved,
-              organizerFee: item.organizerFee,
-              netPayout: item.netPayout,
-              daysContributed: item.daysContributed,
-              totalDays: item.daysContributed,
-              currency: item.currency
-            }))}
-            organizerName={organizerDetails?.name || 'Unknown'}
-            organizerEmail={organizerDetails?.email || 'N/A'}
-            organizerPhone={organizerDetails?.phone || 'N/A'}
-            organizerEarnings={Object.entries(totals.fees).map(([currency, amount]) => ({
-              currency,
-              amount: amount as number
-            }))}
-            reportId={`RPT-${Date.now()}`}
-          />
+          <div className="print:p-0 p-4">
+            <PayoutReportPDF
+              groupName={groupName}
+              cycleNumber={groupData?.current_cycle || 1}
+              cycleStartDate={new Date(groupData?.current_cycle_start_date)}
+              cycleEndDate={new Date()}
+              generatedDate={new Date()}
+              members={payoutItems.map(item => ({
+                name: item.memberName,
+                totalSaved: item.totalSaved,
+                organizerFee: item.organizerFee,
+                netPayout: item.netPayout,
+                daysContributed: item.daysContributed,
+                totalDays: item.daysContributed,
+                currency: item.currency
+              }))}
+              organizerName={organizerDetails?.name || 'Unknown'}
+              organizerEmail={organizerDetails?.email || 'N/A'}
+              organizerPhone={organizerDetails?.phone || 'N/A'}
+              organizerEarnings={Object.entries(totals.fees).map(([currency, amount]) => ({
+                currency,
+                amount: amount as number
+              }))}
+              reportId={`RPT-${Date.now()}`}
+            />
+          </div>
         </div>
       );
     }
@@ -239,7 +241,7 @@ export const CyclePayoutPage = () => {
 
         {showPreview && (
           <div className="border-2 border-blue-300 rounded-lg p-2 sm:p-4 bg-blue-50 dark:bg-blue-950 no-print overflow-x-auto">
-            <div className="mb-4 p-2 sm:p-4 bg-white dark:bg-slate-900 rounded border border-blue-200 dark:border-blue-800 min-w-full sm:min-w-0">
+            <div className="mb-4 p-0 bg-white dark:bg-slate-900 rounded border border-blue-200 dark:border-blue-800 min-w-full sm:min-w-0">
               <PayoutReportPDF
                 groupName={groupName}
                 cycleNumber={groupData?.current_cycle || 1}
