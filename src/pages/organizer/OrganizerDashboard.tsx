@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupCard } from '@/components/groups/GroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { CycleCalendar } from '@/components/dashboard/CycleCalendar';
 import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, Activity } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -240,6 +241,32 @@ export const OrganizerDashboard = () => {
 
           </div>
         </div>
+
+        {/* CYCLE CALENDAR SECTION */}
+        {dashboardData?.groups && dashboardData.groups.length > 0 && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Group Cycles</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {dashboardData.groups.map((group: any) => {
+                // Get paid days for this group from recent payments
+                const groupPayments = dashboardData.recentPayments.filter(
+                  (p: any) => p.group_id === group.id || p.memberships?.group_id === group.id
+                );
+                const paidDays = groupPayments.map((p: any) => p.payment_date);
+
+                return (
+                  <CycleCalendar
+                    key={group.id}
+                    cycleStartDate={new Date(group.current_cycle_start_date)}
+                    cycleDays={group.cycle_days}
+                    paidDays={paidDays}
+                    title={`${group.name} - Cycle ${group.current_cycle}`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { CycleCalendar } from '@/components/dashboard/CycleCalendar';
 import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity, DollarSign } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
@@ -353,6 +354,35 @@ export const MemberDashboard = () => {
             )}
           </div>
         </div>
+
+        {/* CYCLE CALENDAR SECTION */}
+        {dashboardData?.memberships && dashboardData.memberships.length > 0 && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle Progress</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {dashboardData.memberships.map((membership: any) => {
+                const group = membership.groups;
+                if (!group) return null;
+
+                // Get paid days for this membership
+                const membershipPayments = dashboardData.payments.filter(
+                  (p: any) => p.membership_id === membership.id
+                );
+                const paidDays = membershipPayments.map((p: any) => p.payment_date);
+
+                return (
+                  <CycleCalendar
+                    key={membership.id}
+                    cycleStartDate={new Date(group.current_cycle_start_date)}
+                    cycleDays={group.cycle_days}
+                    paidDays={paidDays}
+                    title={`${group.name} - Cycle ${group.current_cycle}`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
