@@ -79,7 +79,7 @@ export const payoutService = {
   previewCyclePayout: async (groupId: string) => {
     const { data: group, error: groupError } = await supabase
       .from('groups')
-      .select('current_cycle_start_date, cycle_days, user_id')
+      .select('current_cycle_start_date, user_id')
       .eq('id', groupId)
       .single();
     
