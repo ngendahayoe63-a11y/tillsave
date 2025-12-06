@@ -109,15 +109,15 @@ export const SetupCurrenciesPage = () => {
   }
 
   return (
-    <div className="p-4 max-w-md mx-auto pb-20">
+    <div className="p-4 max-w-md mx-auto pb-20 bg-background dark:bg-slate-950 min-h-screen">
       <Button variant="ghost" className="mb-4 pl-0" onClick={() => navigate(-1)}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
 
-      <Card>
+      <Card className="dark:bg-slate-900 dark:border-gray-800">
         <CardHeader>
-          <CardTitle>Savings Goals</CardTitle>
-          <CardDescription>
+          <CardTitle className="dark:text-white">Savings Goals</CardTitle>
+          <CardDescription className="dark:text-gray-400">
             Select the currencies you want to save in and how much you commit to contribute <strong>every day</strong>.
           </CardDescription>
         </CardHeader>
@@ -127,7 +127,7 @@ export const SetupCurrenciesPage = () => {
               <div 
                 key={curr.code} 
                 className={`p-4 rounded-lg border-2 transition-all ${
-                  enabled[curr.code] ? 'border-primary bg-blue-50' : 'border-gray-100 bg-gray-50'
+                  enabled[curr.code] ? 'border-primary bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700' : 'border-gray-100 bg-gray-50 dark:bg-slate-800 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -139,18 +139,18 @@ export const SetupCurrenciesPage = () => {
                       onChange={() => toggleCurrency(curr.code)}
                       className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                     />
-                    <Label htmlFor={`check-${curr.code}`} className="text-base font-semibold cursor-pointer">
+                    <Label htmlFor={`check-${curr.code}`} className="text-base font-semibold cursor-pointer dark:text-white">
                       {curr.label} ({curr.code})
                     </Label>
                   </div>
-                  <span className="text-xl">{curr.symbol}</span>
+                  <span className="text-xl dark:text-gray-300">{curr.symbol}</span>
                 </div>
 
                 {enabled[curr.code] && (
                   <div className="animate-accordion-down">
-                    <Label className="text-xs text-gray-500 mb-1 block">Daily Contribution Amount</Label>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Daily Contribution Amount</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-gray-500">{curr.symbol}</span>
+                      <span className="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400">{curr.symbol}</span>
                       <Input
                         type="number"
                         className="pl-12 text-lg font-bold"
@@ -165,7 +165,7 @@ export const SetupCurrenciesPage = () => {
               </div>
             ))}
 
-            <Button type="submit" className="w-full h-12 text-lg" disabled={isSaving}>
+            <Button type="submit" className="w-full h-12 text-lg dark:bg-primary dark:text-white dark:hover:bg-primary/90" disabled={isSaving}>
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Save Preferences
             </Button>

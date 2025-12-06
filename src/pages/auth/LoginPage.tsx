@@ -48,8 +48,20 @@ export const LoginPage = () => {
       }
       
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Invalid email or password");
+      console.error('Login error:', err);
+      let errorMessage = "Login failed. Please try again.";
+      
+      if (err.message === "Invalid login credentials" || err.status === 400) {
+        errorMessage = "Email or password is incorrect. Please check and try again.";
+      } else if (err.message?.includes("email")) {
+        errorMessage = "Please enter a valid email address.";
+      } else if (err.message?.includes("not found")) {
+        errorMessage = "User account not found. Please sign up first.";
+      } else {
+        errorMessage = err.message || "Invalid email or password";
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

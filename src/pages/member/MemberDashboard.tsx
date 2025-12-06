@@ -245,7 +245,7 @@ export const MemberDashboard = () => {
                     </div>
                     <div>
                       <p className="font-bold text-sm dark:text-white">{dashboardData?.goals?.[0]?.name || 'No Goals'}</p>
-                      <p className="text-xs text-gray-500">{dashboardData?.goals?.[0]?.target_date ? `By ${new Date(dashboardData.goals[0].target_date).toLocaleDateString()}` : 'No deadline'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{dashboardData?.goals?.[0]?.target_date ? `By ${new Date(dashboardData.goals[0].target_date).toLocaleDateString()}` : 'No deadline'}</p>
                     </div>
                   </div>
                   {dashboardData?.goals?.[0] && (
@@ -262,7 +262,7 @@ export const MemberDashboard = () => {
                         style={{ width: `${Math.min((dashboardData.goals[0].current_progress / dashboardData.goals[0].target_amount) * 100, 100)}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {dashboardData.goals[0].current_progress.toLocaleString()} / {dashboardData.goals[0].target_amount.toLocaleString()} {dashboardData.goals[0].target_currency}
                     </p>
                   </>
