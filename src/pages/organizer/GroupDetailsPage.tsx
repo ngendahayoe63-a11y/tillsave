@@ -115,33 +115,42 @@ export const GroupDetailsPage = () => {
 
         {/* Member Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {/* Show Organizer First (if they're a member) */}
+          {/* Show Organizer First (if they're a member and search matches) */}
           {organizerMembership && user && (
-            <Card className="hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors dark:bg-slate-900 dark:border-gray-800 border-purple-200 dark:border-purple-900">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                  <Crown className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate text-gray-900 dark:text-gray-100">{user.name}</h3>
-                  <p className="text-xs text-purple-600 dark:text-purple-400">Organizer</p>
-                </div>
+            (() => {
+              const organizerName = user.name;
+              const matchesSearch = organizerName.toLowerCase().includes(searchTerm.toLowerCase());
+              
+              if (!matchesSearch && searchTerm.length > 0) return null;
+              
+              return (
+                <Card className="hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors dark:bg-slate-900 dark:border-gray-800 border-purple-200 dark:border-purple-900">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                      <Crown className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate text-gray-900 dark:text-gray-100">{organizerName}</h3>
+                      <p className="text-xs text-purple-600 dark:text-purple-400">Organizer</p>
+                    </div>
 
-                <div className="flex gap-2">
-                  <Link to={`/organizer/group/${groupId}/history/${organizerMembership.id}`}>
-                    <Button variant="outline" size="icon" className="h-9 w-9">
-                      <History className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link to={`/organizer/group/${groupId}/pay/${organizerMembership.id}`}>
-                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-                      <PlusCircle className="h-4 w-4 mr-1" /> {t('common.pay')}
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="flex gap-2">
+                      <Link to={`/organizer/group/${groupId}/history/${organizerMembership.id}`}>
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                          <History className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link to={`/organizer/group/${groupId}/pay/${organizerMembership.id}`}>
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                          <PlusCircle className="h-4 w-4 mr-1" /> {t('common.pay')}
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()
           )}
 
           {/* Other Members */}
