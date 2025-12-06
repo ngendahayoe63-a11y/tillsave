@@ -56,8 +56,8 @@ export const OrganizerDashboard = () => {
         <div className="bg-gradient-to-r from-blue-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
           <div className="relative z-10">
-            <h1 className="text-2xl font-bold mb-2">👋 Welcome back, {user?.name.split(' ')[0]}!</h1>
-            <p className="text-blue-100 text-sm max-w-xl">
+            <h1 className="text-xl sm:text-2xl font-bold mb-2">👋 Welcome back, {user?.name.split(' ')[0]}!</h1>
+            <p className="text-blue-100 text-xs sm:text-sm max-w-xl">
               It's {format(new Date(), 'MMMM do, yyyy')}. You are managing <strong>{dashboardData?.groups?.length || 0} groups</strong> with <strong>{dashboardData?.totalMembers || 0} members</strong>. 
               <span className="hidden sm:inline"> Everything looks stable today.</span>
             </p>
@@ -71,7 +71,7 @@ export const OrganizerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Members</p>
-                  <h3 className="text-2xl font-bold mt-1 dark:text-white">{dashboardData?.totalMembers || 0}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 dark:text-white">{dashboardData?.totalMembers || 0}</h3>
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" /> Active
                   </p>
@@ -88,7 +88,7 @@ export const OrganizerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Managed</p>
-                  <div className="mt-1 space-y-1 dark:text-white">
+                  <div className="mt-1 space-y-1 dark:text-white text-sm sm:text-base">
                     {renderCurrencyLine(dashboardData?.totalManaged)}
                   </div>
                 </div>
@@ -104,7 +104,7 @@ export const OrganizerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Your Earnings</p>
-                  <div className="mt-1 space-y-1 dark:text-white">
+                  <div className="mt-1 space-y-1 dark:text-white text-sm sm:text-base">
                     {renderCurrencyLine(dashboardData?.totalEarnings)}
                   </div>
                 </div>
@@ -120,7 +120,7 @@ export const OrganizerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Active Cycles</p>
-                  <h3 className="text-2xl font-bold mt-1 dark:text-white">{dashboardData?.groups?.length || 0}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 dark:text-white">{dashboardData?.groups?.length || 0}</h3>
                   <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">In progress</p>
                 </div>
                 <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
@@ -194,33 +194,49 @@ export const OrganizerDashboard = () => {
             {/* Recent Activities */}
             {dashboardData?.recentPayments && dashboardData.recentPayments.length > 0 && (
               <Card className="dark:bg-slate-900 border-none shadow-md">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Activity className="h-4 w-4" /> Recent Activity
                   </CardTitle>
+                  <Link to="/activity-history">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Search className="h-4 w-4" /> View Detailed
+                    </Button>
+                  </Link>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {(showAllActivities ? [...dashboardData.recentPayments].reverse() : [...dashboardData.recentPayments].reverse().slice(0, 5)).map((payment: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                          {payment.memberships?.users?.name || 'Member'} saved
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {payment.recorded_at ? format(new Date(payment.recorded_at), 'MMM d, yyyy HH:mm') : format(new Date(payment.payment_date), 'MMM d, yyyy')}
-                        </p>
+                  {(showAllActivities ? [...dashboardData.recentPayments].reverse() : [...dashboardData.recentPayments].reverse().slice(0, 5)).map((payment: any, idx: number) => {
+                    // Safely access nested user data
+                    const memberName = payment.memberships?.users?.name || 'Unknown Member';
+                    const amount = payment.amount || 0;
+                    const currency = payment.currency || 'RWF';
+                    const paymentDate = payment.payment_date || new Date().toISOString();
+                    
+                    return (
+                      <div key={`${payment.id}-${idx}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+                        <div className="flex-1 min-w-0 mb-2 sm:mb-0">
+                          <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            {memberName}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            {format(new Date(paymentDate), 'MMM d, yyyy - HH:mm')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm sm:text-base font-bold text-green-600 dark:text-green-400">
+                            {amount.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {currency}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-green-600 dark:text-green-400 whitespace-nowrap ml-2">
-                          {payment.amount.toLocaleString()} {payment.currency}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {!showAllActivities && dashboardData.recentPayments.length > 5 && (
                     <Button 
                       variant="ghost" 
-                      className="w-full text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-2"
+                      className="w-full text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 mt-2"
                       onClick={() => setShowAllActivities(true)}
                     >
                       View All Activities ({dashboardData.recentPayments.length})
@@ -229,7 +245,7 @@ export const OrganizerDashboard = () => {
                   {showAllActivities && dashboardData.recentPayments.length > 5 && (
                     <Button 
                       variant="ghost" 
-                      className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mt-2"
+                      className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 mt-2"
                       onClick={() => setShowAllActivities(false)}
                     >
                       Show Less

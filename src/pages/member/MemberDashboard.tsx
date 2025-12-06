@@ -7,7 +7,7 @@ import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CycleCalendar } from '@/components/dashboard/CycleCalendar';
-import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity, DollarSign } from 'lucide-react';
+import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity, DollarSign, Search } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 import { useState } from 'react';
@@ -278,6 +278,11 @@ export const MemberDashboard = () => {
                   <CardTitle className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Activity className="h-4 w-4" /> Recent Activity
                   </CardTitle>
+                  <Link to="/activity-history">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Search className="h-4 w-4" /> View Detailed
+                    </Button>
+                  </Link>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {(showAllActivities ? [...dashboardData.payments].reverse() : [...dashboardData.payments].reverse().slice(0, 3)).map((payment: any, idx: number) => (

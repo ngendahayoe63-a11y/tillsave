@@ -26,6 +26,7 @@ import { MemberAnalyticsPage } from '@/pages/member/MemberAnalyticsPage';
 import { ProfilePage } from '@/pages/shared/ProfilePage';
 import { CycleHistoryPage } from '@/pages/shared/CycleHistoryPage';
 import { PastCycleReportPage } from '@/pages/shared/PastCycleReportPage';
+import { ActivityHistoryPage } from '@/pages/shared/ActivityHistoryPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 
@@ -79,6 +80,7 @@ export const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { path: 'profile', element: <ProfilePage /> },
+          { path: 'activity-history', element: <ActivityHistoryPage /> },
           { path: 'group/:groupId/history/cycles', element: <CycleHistoryPage /> },
           { path: 'group/:groupId/history/cycle/:payoutId', element: <PastCycleReportPage /> },
           {
