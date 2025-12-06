@@ -199,7 +199,7 @@ export const OrganizerDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {(showAllActivities ? dashboardData.recentPayments : dashboardData.recentPayments.slice(0, 5)).map((payment: any, idx: number) => (
+                  {(showAllActivities ? [...dashboardData.recentPayments].reverse() : [...dashboardData.recentPayments].reverse().slice(0, 5)).map((payment: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">

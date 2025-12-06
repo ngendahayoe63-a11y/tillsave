@@ -279,7 +279,7 @@ export const MemberDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {(showAllActivities ? dashboardData.payments : dashboardData.payments.slice(0, 3)).map((payment: any, idx: number) => (
+                  {(showAllActivities ? [...dashboardData.payments].reverse() : [...dashboardData.payments].reverse().slice(0, 3)).map((payment: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
