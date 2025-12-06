@@ -146,17 +146,17 @@ export const payoutService = {
           currencyGroups[p.currency] += p.amount;
         });
         
-        // Get daily rates for fee calculation
+        // Get daily rates for fee calculation - fetch all rates, not just active
         const { data: rates, error: ratesError } = await supabase
           .from('member_currency_rates')
-          .select('currency, daily_rate')
+          .select('currency, daily_rate, is_active, end_date')
           .eq('membership_id', member.id)
-          .eq('is_active', true);
+          .order('start_date', { ascending: false });
         
         if (ratesError) {
           console.error('Rates fetch error for member', member.id, ratesError);
         } else {
-          console.log(`Member ${(member.users as any)?.name} has rates:`, rates);
+          console.log(`Member ${(member.users as any)?.name} has ${rates?.length || 0} rates:`, rates);
         }
         
         // Access user info correctly from the users alias
