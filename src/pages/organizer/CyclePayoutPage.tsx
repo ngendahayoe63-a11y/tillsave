@@ -30,48 +30,51 @@ export const CyclePayoutPage = () => {
   const [payoutItems, setPayoutItems] = useState<PayoutItem[]>([]);
   const [totals, setTotals] = useState({ saved: {}, fees: {}, net: {} });
   const [organizerDetails, setOrganizerDetails] = useState<any>(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const loadData = async () => {
+    if (!groupId || !currentUser) return;
+    setIsLoading(true);
+    try {
+      const group = await groupsService.getGroupDetails(groupId);
+      setGroupName(group.name);
+      setGroupData(group);
+
+      // Fetch organizer details
+      const orgDetails = await payoutService.getOrganizerDetails(currentUser.id);
+      setOrganizerDetails(orgDetails);
+
+      const items = await payoutService.previewCyclePayout(groupId);
+      setPayoutItems(items);
+
+      // Calculate Totals
+      const tSaved: any = {};
+      const tFees: any = {};
+      const tNet: any = {};
+
+      items.forEach(i => {
+        if(!tSaved[i.currency]) { tSaved[i.currency]=0; tFees[i.currency]=0; tNet[i.currency]=0; }
+        tSaved[i.currency] += i.totalSaved;
+        tFees[i.currency] += i.organizerFee;
+        tNet[i.currency] += i.netPayout;
+      });
+      setTotals({ saved: tSaved, fees: tFees, net: tNet });
+
+    } catch (error) {
+      console.error(error);
+      addToast({
+        type: 'error',
+        title: 'Error loading payout data',
+        description: 'Please try again',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!groupId || !currentUser) return;
-      try {
-        const group = await groupsService.getGroupDetails(groupId);
-        setGroupName(group.name);
-        setGroupData(group);
-
-        // Fetch organizer details
-        const orgDetails = await payoutService.getOrganizerDetails(currentUser.id);
-        setOrganizerDetails(orgDetails);
-
-        const items = await payoutService.previewCyclePayout(groupId);
-        setPayoutItems(items);
-
-        // Calculate Totals
-        const tSaved: any = {};
-        const tFees: any = {};
-        const tNet: any = {};
-
-        items.forEach(i => {
-          if(!tSaved[i.currency]) { tSaved[i.currency]=0; tFees[i.currency]=0; tNet[i.currency]=0; }
-          tSaved[i.currency] += i.totalSaved;
-          tFees[i.currency] += i.organizerFee;
-          tNet[i.currency] += i.netPayout;
-        });
-        setTotals({ saved: tSaved, fees: tFees, net: tNet });
-
-      } catch (error) {
-        console.error(error);
-        addToast({
-          type: 'error',
-          title: 'Error loading payout data',
-          description: 'Please try again',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadData();
-  }, [groupId, currentUser]);
+  }, [groupId, currentUser, reloadTrigger]);
 
   // Auto-open print dialog when finalized and preview is shown
   useEffect(() => {
@@ -133,8 +136,12 @@ export const CyclePayoutPage = () => {
         description: 'Members can now contribute to the new cycle.',
       });
 
+      // Reset state and reload fresh data for the new cycle
       setShowCycleComplete(false);
-      navigate(`/organizer/group/${groupId}`);
+      setIsFinalized(false);
+      setShowPreview(false);
+      setShowConfirmDialog(false);
+      setReloadTrigger(prev => prev + 1); // Trigger data reload
     } catch (error: any) {
       addToast({
         type: 'error',
