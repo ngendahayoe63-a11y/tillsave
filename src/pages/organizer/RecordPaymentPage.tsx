@@ -197,6 +197,8 @@ export const RecordPaymentPage = () => {
                 value={formData.amount}
                 onChange={(e) => setFormData({...formData, amount: e.target.value})}
                 className="text-lg font-bold"
+                min="1"
+                step="1"
                 required
               />
             </div>

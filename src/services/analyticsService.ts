@@ -14,7 +14,7 @@ export const analyticsService = {
     if (!groups || groups.length === 0) return null;
     const groupIds = groups.map(g => g.id);
     const { count: memberCount } = await supabase.from('memberships').select('id', { count: 'exact', head: true }).in('group_id', groupIds).eq('status', 'ACTIVE');
-    const { data: payments } = await supabase.from('payments').select('amount, currency, membership_id').in('group_id', groupIds).gte('payment_date', start.toISOString()).lte('payment_date', end.toISOString());
+    const { data: payments } = await supabase.from('payments').select('amount, currency, membership_id').in('group_id', groupIds).eq('archived', false).gte('payment_date', start.toISOString()).lte('payment_date', end.toISOString());
     const { data: rates } = await supabase.from('member_currency_rates').select('*').eq('is_active', true);
     const totalManaged: Record<string, number> = {};
     const totalEarnings: Record<string, number> = {};
@@ -45,6 +45,7 @@ export const analyticsService = {
       .from('payments')
       .select('amount, currency, membership_id, payment_date')
       .eq('group_id', groupId)
+      .eq('archived', false)
       .gte('payment_date', cycleStart.toISOString())
       .lte('payment_date', cycleEnd.toISOString());
 
@@ -158,6 +159,7 @@ export const analyticsService = {
         .from('payments')
         .select('amount, currency')
         .eq('membership_id', m.id)
+        .eq('archived', false)
         .gte('payment_date', startDate.toISOString())
         .lte('payment_date', endDate.toISOString());
 

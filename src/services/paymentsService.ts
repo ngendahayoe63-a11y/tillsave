@@ -34,6 +34,11 @@ export const paymentsService = {
     date: Date,
     receiptFile?: File // Optional file
   ) => {
+    // Store as full ISO timestamp for consistent date comparison in queries
+    const paymentDate = date.toISOString();
+    
+    console.log(`💾 Recording payment: ${amount} ${currency} on ${paymentDate} for membership ${membershipId}`);
+    
     // 1. Insert the payment record first to get an ID
     const { data, error } = await supabase
       .from('payments')
@@ -43,14 +48,19 @@ export const paymentsService = {
         amount: amount,
         currency: currency,
         recorded_by: recorderId,
-        payment_date: date.toISOString().split('T')[0],
+        payment_date: paymentDate,
         status: 'CONFIRMED',
         payment_method: 'CASH'
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Payment insert error:', error);
+      throw error;
+    }
+
+    console.log(`✅ Payment saved with ID: ${data.id}`);
 
     // 2. If there is a file, upload it and update the record
     if (receiptFile && data) {
@@ -67,19 +77,34 @@ export const paymentsService = {
 
   // ... (Keep getMembershipPayments, getPaymentById, updatePayment, deletePayment exactly as they were)
   getMembershipPayments: async (membershipId: string) => {
-    const { data, error } = await supabase.from('payments').select('*').eq('membership_id', membershipId).order('payment_date', { ascending: false });
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('membership_id', membershipId)
+      .eq('archived', false)
+      .order('payment_date', { ascending: false });
     if (error) throw error;
     return data;
   },
 
   getPaymentById: async (paymentId: string) => {
-    const { data, error } = await supabase.from('payments').select('*').eq('id', paymentId).single();
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('id', paymentId)
+      .eq('archived', false)
+      .single();
     if (error) throw error;
     return data;
   },
 
   updatePayment: async (paymentId: string, amount: number, date: Date) => {
-    const { data, error } = await supabase.from('payments').update({ amount, payment_date: date.toISOString().split('T')[0] }).eq('id', paymentId).select().single();
+    const { data, error } = await supabase
+      .from('payments')
+      .update({ amount, payment_date: date.toISOString() })
+      .eq('id', paymentId)
+      .select()
+      .single();
     if (error) throw error;
     return data;
   },

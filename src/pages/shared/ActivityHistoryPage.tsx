@@ -117,6 +117,7 @@ export const ActivityHistoryPage = () => {
                 )
               `)
               .in('membership_id', membershipIds)
+              .eq('archived', false)
               .order('payment_date', { ascending: false });
 
             payments?.forEach((p: any) => {
@@ -221,6 +222,7 @@ export const ActivityHistoryPage = () => {
               )
             `)
             .in('membership_id', membershipIds)
+            .eq('archived', false)
             .order('payment_date', { ascending: false });
 
           payments?.forEach((p: any) => {

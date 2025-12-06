@@ -7,10 +7,13 @@ import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CycleCalendar } from '@/components/dashboard/CycleCalendar';
+import { CycleHistoryCard } from '@/components/analytics/CycleHistoryCard';
+import { MemberConsistencyCard } from '@/components/analytics/MemberConsistencyCard';
 import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity, DollarSign, Search } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { dashboardService } from '@/services/dashboardService';
 
 export const MemberDashboard = () => {
   const { t } = useTranslation();
@@ -18,6 +21,25 @@ export const MemberDashboard = () => {
   const navigate = useNavigate();
   const { data: dashboardData, isLoading, error } = useMemberDashboard(user?.id);
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [cycleHistories, setCycleHistories] = useState<Record<string, any[]>>({});
+  const [consistencyMetrics, setConsistencyMetrics] = useState<Record<string, any>>({});
+
+  // Load cycle history and consistency for each group
+  useEffect(() => {
+    if (!user?.id || !dashboardData?.memberships) return;
+
+    dashboardData.memberships.forEach(async (membership: any) => {
+      try {
+        const history = await dashboardService.getMemberCycleHistory(user.id, membership.group_id);
+        const consistency = await dashboardService.getMemberConsistency(user.id, membership.group_id);
+        
+        setCycleHistories(prev => ({ ...prev, [membership.group_id]: history }));
+        setConsistencyMetrics(prev => ({ ...prev, [membership.group_id]: consistency }));
+      } catch (err) {
+        console.error('Error loading analytics:', err);
+      }
+    });
+  }, [user?.id, dashboardData?.memberships]);
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) {
@@ -362,29 +384,75 @@ export const MemberDashboard = () => {
 
         {/* CYCLE CALENDAR SECTION */}
         {dashboardData?.memberships && dashboardData.memberships.length > 0 && (
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle Progress</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {dashboardData.memberships.map((membership: any) => {
-                const group = membership.groups;
-                if (!group) return null;
+          <div className="space-y-6">
+            {/* Analytics & Consistency Cards */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Your Performance</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {dashboardData.memberships.map((membership: any) => {
+                  const metrics = consistencyMetrics[membership.group_id];
+                  
+                  if (!metrics) return null;
 
-                // Get paid days for this membership
-                const membershipPayments = dashboardData.payments.filter(
-                  (p: any) => p.membership_id === membership.id
-                );
-                const paidDays = membershipPayments.map((p: any) => p.payment_date);
+                  return (
+                    <div key={membership.id} className="space-y-4">
+                      <MemberConsistencyCard
+                        cyclesPaidIn={metrics.cyclesPaidIn}
+                        totalCycles={metrics.totalCycles}
+                        streakDays={dashboardData?.streakDays || 0}
+                        trend={metrics.consistencyPercent >= 80 ? 'improving' : 'stable'}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-                return (
-                  <CycleCalendar
-                    key={membership.id}
-                    cycleStartDate={new Date(group.current_cycle_start_date)}
-                    cycleDays={group.cycle_days}
-                    paidDays={paidDays}
-                    title={`${group.name} - Cycle ${group.current_cycle}`}
-                  />
-                );
-              })}
+            {/* Cycle History Cards */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle History</h2>
+              <div className="grid grid-cols-1 gap-6">
+                {dashboardData.memberships.map((membership: any) => {
+                  const cycles = cycleHistories[membership.group_id];
+                  if (!cycles || cycles.length === 0) return null;
+
+                  return (
+                    <CycleHistoryCard
+                      key={membership.id}
+                      groupId={membership.group_id}
+                      cycles={cycles}
+                      userRole="MEMBER"
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Cycle Progress Calendar */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle Progress</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {dashboardData.memberships.map((membership: any) => {
+                  const group = membership.groups;
+                  if (!group) return null;
+
+                  // Get paid days for this membership
+                  const membershipPayments = dashboardData.payments.filter(
+                    (p: any) => p.membership_id === membership.id
+                  );
+                  const paidDays = membershipPayments.map((p: any) => p.payment_date);
+
+                  return (
+                    <CycleCalendar
+                      key={membership.id}
+                      cycleStartDate={new Date(group.current_cycle_start_date)}
+                      cycleDays={group.cycle_days}
+                      paidDays={paidDays}
+                      title={`${group.name} - Cycle ${group.current_cycle}`}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

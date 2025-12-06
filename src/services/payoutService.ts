@@ -95,7 +95,7 @@ export const payoutService = {
       // Get group info
       const { data: group, error: groupError } = await supabase
         .from('groups')
-        .select('current_cycle_start_date, current_cycle')
+        .select('current_cycle_start_date, current_cycle, cycle_days')
         .eq('id', groupId)
         .single();
       
@@ -105,25 +105,33 @@ export const payoutService = {
       }
       if (!group) throw new Error("Group not found");
       
-      // Parse the start date - it's stored in ISO format
-      const start = new Date(group.current_cycle_start_date);
+      if (!group.current_cycle_start_date) {
+        console.error('❌ CRITICAL: current_cycle_start_date is NULL or undefined!');
+        console.error('   This means the group was created before the fix was applied.');
+        console.error('   You MUST run the SQL fix in Supabase to set proper dates.');
+        throw new Error("Group cycle start date is not set. Please contact support.");
+      }
       
-      // Get just the date part in YYYY-MM-DD format (in local timezone to avoid timezone issues)
-      // Instead of using toISOString() which converts to UTC, extract the date string properly
-      const startYear = start.getFullYear();
-      const startMonth = String(start.getMonth() + 1).padStart(2, '0');
-      const startDate = String(start.getDate()).padStart(2, '0');
-      const startDateStr = `${startYear}-${startMonth}-${startDate}`;
+      // Parse the start date - set to start of cycle (00:00:00)
+      let startDate = new Date(group.current_cycle_start_date);
+      startDate.setHours(0, 0, 0, 0);
+      const startDateStr = startDate.toISOString(); // Full ISO timestamp
       
-      const now = new Date();
-      const endYear = now.getFullYear();
-      const endMonth = String(now.getMonth() + 1).padStart(2, '0');
-      const endDate = String(now.getDate()).padStart(2, '0');
-      const endDateStr = `${endYear}-${endMonth}-${endDate}`;
+      // Calculate cycle end date based on cycle_days, not today
+      // This includes all payments recorded for this cycle, even future-dated ones
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + (group.cycle_days || 30));
+      endDate.setHours(23, 59, 59, 999);
+      const endDateStr = endDate.toISOString(); // Full ISO timestamp
+      
+      // For console logging - show readable date range
+      const displayStartDate = startDate.toISOString().split('T')[0];
+      const displayEndDate = new Date(endDate).toISOString().split('T')[0];
       
       console.log(`📊 Payout Preview - Cycle ${group.current_cycle}`);
-      console.log(`   Fetching payments from ${startDateStr} to ${endDateStr} for group ${groupId}`);
-      console.log(`   Start Date (from DB): ${group.current_cycle_start_date}`);
+      console.log(`   Query date range: ${displayStartDate} to ${displayEndDate}`);
+      console.log(`   Using ISO timestamps for consistent comparison`);
+      console.log(`   Raw start date from DB: ${group.current_cycle_start_date}`);
       
       // Get members with user details using correct alias
       const { data: members, error: membersError } = await supabase
@@ -149,29 +157,29 @@ export const payoutService = {
       
       for (const member of members) {
         // Get payments for this member in the current cycle
+        // Query using consistent ISO timestamp format
+        // Filter archived: false to only get current cycle payments
         const { data: payments, error: paymentsError } = await supabase
           .from('payments')
           .select('amount, currency, payment_date')
           .eq('membership_id', member.id)
+          .eq('archived', false)
           .gte('payment_date', startDateStr)
           .lte('payment_date', endDateStr);
         
         if (paymentsError) {
-          console.error('Payments fetch error:', paymentsError);
+          console.error('Payments fetch error for member', member.id, paymentsError);
           continue;
         }
         
         const safePayments = payments || [];
+        const memberName = (member.users as any)?.name || 'Unknown';
         
         // Log detailed payment info for debugging
-        if (safePayments.length > 0) {
-          console.log(`   ${(member.users as any)?.name}: ${safePayments.length} payment(s) found`);
-          safePayments.forEach(p => {
-            console.log(`      - ${p.payment_date}: ${p.amount} ${p.currency}`);
-          });
-        } else {
-          console.log(`   ${(member.users as any)?.name}: No payments found`);
-        }
+        console.log(`Member: ${memberName}`);
+        console.log(`  - Queried payments between ${startDateStr} and ${endDateStr}`);
+        console.log(`  - Found: ${safePayments.length} payment(s)`);
+        console.log(`  - Payment details:`, safePayments.map(p => ({ amount: p.amount, currency: p.currency, date: p.payment_date })));
         
         if (safePayments.length === 0) continue;
         
@@ -181,6 +189,7 @@ export const payoutService = {
           if (!currencyGroups[p.currency]) currencyGroups[p.currency] = 0;
           currencyGroups[p.currency] += p.amount;
         });
+        console.log(`Currency groups for ${memberName}:`, currencyGroups);
         
         // Get daily rates for fee calculation - fetch all rates, not just active
         const { data: rates, error: ratesError } = await supabase
@@ -289,6 +298,24 @@ export const payoutService = {
       console.error('Payout items insert error:', itemsError);
       throw itemsError;
     }
+    
+    // ARCHIVE: Mark all payments from this cycle as archived
+    // This prevents old cycle data from appearing in future cycles
+    const { error: archiveError } = await supabase
+      .from('payments')
+      .update({ 
+        archived: true,
+        archived_cycle: currentCycle 
+      })
+      .eq('group_id', groupId)
+      .eq('archived', false);
+    
+    if (archiveError) {
+      console.error('Archive error:', archiveError);
+      throw archiveError;
+    }
+    
+    console.log(`✅ Cycle ${currentCycle} payments archived`);
     
     // CRITICAL: Set current_cycle_start_date to tomorrow (not today) to ensure
     // the new cycle doesn't include any data from the finalized cycle.

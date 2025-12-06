@@ -1,53 +1,88 @@
-# TillSave - The Real Conversation
-## Ready for Users? Support? Equity?
+# Payment Recording - Root Cause Diagnostic
 
-**Date**: December 6, 2025  
-**Purpose**: The honest answers to the questions that actually matter  
-**Audience**: Metero (the founder) + potential supporters  
+## The Problem
+When you click "End Cycle & Payout", you see:
+> "No Savings Recorded - You cannot end the cycle because no members have recorded any savings yet."
 
----
+This means `previewCyclePayout()` is returning an **empty array**.
 
-## Q1: 10 Organizers This Week - Are We Ready?
+## Why?
 
-### Direct Answer: YES, But With One Critical Fix
+The "No Savings Recorded" message is **intentional** - it's meant to:
+- ✅ Prevent ending cycles with zero activity
+- ✅ Ensure data integrity
+- ✅ Avoid orphaned cycles
 
-#### What's Ready Right Now ✅
+**The REAL question is: Why aren't the payments you recorded appearing?**
 
-You can onboard 10 organizers **today** and they will:
-- ✅ Sign up successfully (phone + OTP + PIN works)
-- ✅ Create groups (get unique codes)
-- ✅ Add members (members join via code)
-- ✅ Record payments (no issues, real-time sync)
-- ✅ See dashboards (fast, responsive)
-- ✅ Track multi-currency (works perfectly)
-- ✅ View payouts (calculations correct)
-- ✅ Works offline (service worker verified)
-- ✅ Dark mode (just fixed)
-- ✅ Multiple languages (EN, RW, FR, SW)
+Payments aren't showing means one of these:
+1. **Payment wasn't saved to database at all**
+2. **Payment saved but with wrong date/group/member IDs**
+3. **Query filtering isn't finding existing payments**
 
-**No crashes. No major bugs. No data loss.**
+## Diagnostic: Where's the Actual Problem?
 
----
+### Test This Now
 
-#### The ONE Thing I'd Fix First
+**Step 1: Record a payment and note the details:**
+- Group name: ___________
+- Member name: ___________
+- Amount: _________ Currency: _________
+- Date: _________
 
-**Problem**: **Payout finalization is irreversible + no way to start next cycle**
+**Step 2: Check if success message appeared:**
+- [ ] Yes - Green "Payment recorded" toast appeared
+- [ ] No - Error message appeared
+- [ ] No response - Silent failure
 
-**Why This Matters**:
+**Step 3: Check Supabase - Do payments exist?**
+
+Go to: Supabase dashboard → SQL Editor
+
+Run this query:
+```sql
+SELECT COUNT(*) as total_payments
+FROM payments;
 ```
-Scenario: Organizer finalizes payout for Cycle 1
-Problem 1: "Oh no, I made a mistake!" → No undo button
-Problem 2: "Great, now how do I start Cycle 2?" → No button exists
 
-Result: Organizer stuck, support nightmare, loses trust
+Result: _________ payments total in database
+
+**Step 4: Find your specific payment**
+
+```sql
+SELECT id, payment_date, amount, currency, group_id, membership_id, created_at
+FROM payments
+ORDER BY created_at DESC
+LIMIT 5;
 ```
 
-**What Needs to Happen** (2-3 hours of work):
+Your payment should appear here. If not found:
+- [ ] Not in database at all
+- [ ] In database with different amount/date/currency
 
-**Fix #1: Add Payout Confirmation Modal**
-```typescript
-Before: Organizer clicks "Finalize Payout" → Immediately finalized
+**Step 5: Check cycle configuration**
 
+```sql
+SELECT id, name, current_cycle, current_cycle_start_date, cycle_days, status
+FROM groups
+WHERE id = 'YOUR_GROUP_ID';
+```
+
+Check these:
+- `current_cycle_start_date`: Should be in PAST (like Dec 1), not FUTURE
+- If set to TOMORROW → That's part of the problem
+- `status`: Should be 'ACTIVE'
+
+## Report Back With These Answers
+
+1. Did you see "Payment recorded" success toast? YES / NO
+2. From Step 3: How many total payments exist? _____
+3. From Step 4: Did your payment appear? YES / NO
+   - If YES: What was the payment_date in DB?
+   - If NO: What does the error message say?
+4. From Step 5: What is `current_cycle_start_date`?
+
+Once I have these answers, I can pinpoint **exactly** where the breakdown is.
 After: 
 1. Click "Finalize Payout"
 2. Modal shows: "Review Before Finalizing"

@@ -7,18 +7,35 @@ import { GroupCard } from '@/components/groups/GroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CycleCalendar } from '@/components/dashboard/CycleCalendar';
+import { OrganizerCycleHistoryCard } from '@/components/analytics/OrganizerCycleHistoryCard';
 import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, Activity } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOrganizerDashboard } from '@/hooks/useDashboard';
+import { dashboardService } from '@/services/dashboardService';
 
 export const OrganizerDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { data: dashboardData, isLoading, error } = useOrganizerDashboard(user?.id);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cycleHistories, setCycleHistories] = useState<Record<string, any[]>>({});
   const [showAllActivities, setShowAllActivities] = useState(false);
+
+  // Load cycle history for each group
+  useEffect(() => {
+    if (!dashboardData?.groups) return;
+
+    dashboardData.groups.forEach(async (group: any) => {
+      try {
+        const history = await dashboardService.getOrganizerCycleHistory(group.id);
+        setCycleHistories(prev => ({ ...prev, [group.id]: history }));
+      } catch (err) {
+        console.error('Error loading cycle history:', err);
+      }
+    });
+  }, [dashboardData?.groups]);
 
   // Helper to render currencies
   const renderCurrencyLine = (data: Record<string, number> | undefined) => {
@@ -166,6 +183,27 @@ export const OrganizerDashboard = () => {
                 actionLabel="Create Group"
                 onAction={() => window.location.href = '/organizer/create-group'}
               />
+            )}
+
+            {/* Cycle History Section */}
+            {filteredGroups.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle History</h2>
+                <div className="space-y-4">
+                  {filteredGroups.map(group => {
+                    const cycles = cycleHistories[group.id];
+                    if (!cycles || cycles.length === 0) return null;
+
+                    return (
+                      <OrganizerCycleHistoryCard
+                        key={group.id}
+                        groupId={group.id}
+                        cycles={cycles}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
 

@@ -37,6 +37,7 @@ export const PaymentHistoryPage = () => {
           .select('*')
           .eq('membership_id', membership.id)
           .eq('status', 'CONFIRMED')
+          .eq('archived', false)
           .order('payment_date', { ascending: false });
 
         if (error) throw error;

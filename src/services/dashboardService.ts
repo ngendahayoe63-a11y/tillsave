@@ -454,6 +454,164 @@ export const dashboardService = {
       console.error('Error loading member activities:', error);
       return [];
     }
+  },
+
+  /**
+   * Get cycle history for a member in a specific group
+   */
+  getMemberCycleHistory: async (userId: string, groupId: string) => {
+    try {
+      // Get all payouts for the group
+      const { data: payouts, error: payoutsError } = await supabase
+        .from('payouts')
+        .select(`
+          id, 
+          cycle_number, 
+          payout_date,
+          payout_items(*)
+        `)
+        .eq('group_id', groupId)
+        .order('cycle_number', { ascending: false });
+
+      if (payoutsError) throw payoutsError;
+
+      // Get member's payments for this group
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select(`
+          id, 
+          amount, 
+          currency, 
+          payment_date,
+          membership_id,
+          memberships(user_id)
+        `)
+        .eq('memberships.user_id', userId)
+        .eq('group_id', groupId);
+
+      if (paymentsError) throw paymentsError;
+
+      // Match payments to payouts by date range
+      const cycleHistory = payouts?.map((payout: any) => {
+        const payoutItems = payout.payout_items || [];
+        const memberItem = payoutItems.find((item: any) => item.user_id === userId);
+
+        // Get payments that contributed to this cycle
+        const contributedAmount: Record<string, number> = {};
+        (payments || []).forEach((p: any) => {
+          if (new Date(p.payment_date) <= new Date(payout.payout_date)) {
+            if (!contributedAmount[p.currency]) contributedAmount[p.currency] = 0;
+            contributedAmount[p.currency] += p.amount;
+          }
+        });
+
+        return {
+          id: payout.id,
+          cycle_number: payout.cycle_number,
+          payout_date: payout.payout_date,
+          totalSaved: contributedAmount,
+          commissionEarned: memberItem?.commission_earned_by_member || {},
+          amountReceived: memberItem ? { [memberItem.currency || 'RWF']: memberItem.net_payout || 0 } : {}
+        };
+      }) || [];
+
+      return cycleHistory;
+    } catch (error) {
+      console.error('Error fetching member cycle history:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get cycle history for an organizer's group
+   */
+  getOrganizerCycleHistory: async (groupId: string) => {
+    try {
+      const { data: payouts, error: payoutsError } = await supabase
+        .from('payouts')
+        .select(`
+          id, 
+          cycle_number, 
+          payout_date,
+          organizer_fee_total_rwf,
+          payout_items(*)
+        `)
+        .eq('group_id', groupId)
+        .order('cycle_number', { ascending: false });
+
+      if (payoutsError) throw payoutsError;
+
+      // Get member count for this group
+      const { data: memberships, error: membershipsError } = await supabase
+        .from('memberships')
+        .select('id, group_id')
+        .eq('group_id', groupId)
+        .eq('status', 'ACTIVE');
+
+      if (membershipsError) throw membershipsError;
+
+      const cycleHistory = payouts?.map((payout: any) => {
+        const payoutItems = payout.payout_items || [];
+        const totalCollected: Record<string, number> = {};
+        let totalEarnings: Record<string, number> = {};
+
+        payoutItems.forEach((item: any) => {
+          if (!totalCollected[item.currency]) totalCollected[item.currency] = 0;
+          totalCollected[item.currency] += item.total_saved || 0;
+
+          if (!totalEarnings[item.currency]) totalEarnings[item.currency] = 0;
+          totalEarnings[item.currency] += item.organizer_fee || 0;
+        });
+
+        return {
+          id: payout.id,
+          cycle_number: payout.cycle_number,
+          payout_date: payout.payout_date,
+          totalSaved: totalCollected,
+          commissionEarned: totalEarnings,
+          membersCount: memberships?.length || 0
+        };
+      }) || [];
+
+      return cycleHistory;
+    } catch (error) {
+      console.error('Error fetching organizer cycle history:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get member consistency metrics (cycles paid in vs total cycles)
+   */
+  getMemberConsistency: async (userId: string, groupId: string) => {
+    try {
+      // Get all payouts for the group
+      const { data: payouts, error: payoutsError } = await supabase
+        .from('payouts')
+        .select('id, cycle_number, payout_date, payout_items(*)')
+        .eq('group_id', groupId);
+
+      if (payoutsError) throw payoutsError;
+
+      const totalCycles = payouts?.length || 0;
+
+      // Count how many cycles member contributed to
+      let cyclesPaidIn = 0;
+      payouts?.forEach((payout: any) => {
+        const payoutItems = payout.payout_items || [];
+        const memberItem = payoutItems.find((item: any) => item.user_id === userId);
+        if (memberItem) cyclesPaidIn++;
+      });
+
+      return {
+        cyclesPaidIn,
+        totalCycles,
+        consistencyPercent: totalCycles > 0 ? Math.round((cyclesPaidIn / totalCycles) * 100) : 0
+      };
+    } catch (error) {
+      console.error('Error fetching member consistency:', error);
+      return { cyclesPaidIn: 0, totalCycles: 0, consistencyPercent: 0 };
+    }
   }
 };
 

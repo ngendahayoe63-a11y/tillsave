@@ -25,6 +25,11 @@ export const groupsService = {
       else joinCode = generateJoinCode();
     }
 
+    // Set current_cycle_start_date to today so payment filtering works correctly from day 1
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
+
     const { data: group, error } = await supabase
       .from('groups')
       .insert({
@@ -32,7 +37,9 @@ export const groupsService = {
         name,
         join_code: joinCode,
         cycle_days: cycleDays,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        current_cycle: 1,
+        current_cycle_start_date: todayISO
       })
       .select()
       .single();
