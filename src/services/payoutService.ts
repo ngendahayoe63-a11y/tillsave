@@ -315,42 +315,27 @@ export const payoutService = {
   },
 
   /**
-   * START NEXT CYCLE: Create a new cycle after payout finalized
-   * NOTE: startNextCycle should not be needed since finalizePayout already updates the cycle.
-   * Keeping it for backward compatibility and manual cycle advancement if needed.
+   * START NEXT CYCLE: Confirm the next cycle is ready (finalizePayout already incremented it)
+   * NOTE: finalizePayout() already handles incrementing the cycle and setting the date.
+   * This function now only logs confirmation for the user.
    */
   startNextCycle: async (groupId: string) => {
-    // Get current cycle number
+    // Get current cycle info (should be already incremented by finalizePayout)
     const { data: group, error: groupError } = await supabase
       .from('groups')
-      .select('current_cycle, cycle_number')
+      .select('current_cycle, cycle_number, current_cycle_start_date')
       .eq('id', groupId)
       .single();
     
     if (groupError) throw groupError;
     
-    // Use whichever field exists
     const currentCycle = group?.cycle_number || group?.current_cycle || 1;
-    const nextCycle = currentCycle + 1;
     
-    // Set start date to tomorrow (midnight) to ensure new cycle starts fresh
-    // and doesn't include any data from the previous finalized cycle
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0); // Set to midnight
+    console.log(`✅ Next Cycle Ready`);
+    console.log(`   Cycle Number: ${currentCycle}`);
+    console.log(`   Start Date: ${group?.current_cycle_start_date}`);
+    console.log(`   Status: ACTIVE`);
     
-    // Update group with new cycle
-    const { error: updateError } = await supabase
-      .from('groups')
-      .update({
-        current_cycle: nextCycle,
-        cycle_number: nextCycle,
-        current_cycle_start_date: tomorrow.toISOString(),
-        status: 'ACTIVE'
-      })
-      .eq('id', groupId);
-    
-    if (updateError) throw updateError;
-    return { cycleNumber: nextCycle, startDate: tomorrow.toISOString() };
+    return { cycleNumber: currentCycle, startDate: group?.current_cycle_start_date };
   }
 };
