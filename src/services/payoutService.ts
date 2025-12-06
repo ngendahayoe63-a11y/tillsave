@@ -95,7 +95,7 @@ export const payoutService = {
       // Get group info
       const { data: group, error: groupError } = await supabase
         .from('groups')
-        .select('current_cycle_start_date')
+        .select('current_cycle_start_date, current_cycle')
         .eq('id', groupId)
         .single();
       
@@ -105,12 +105,25 @@ export const payoutService = {
       }
       if (!group) throw new Error("Group not found");
       
+      // Parse the start date - it's stored in ISO format
       const start = new Date(group.current_cycle_start_date);
-      const end = new Date();
-      const startDateStr = start.toISOString().split('T')[0]; // YYYY-MM-DD
-      const endDateStr = end.toISOString().split('T')[0];     // YYYY-MM-DD
       
-      console.log(`Fetching payments from ${startDateStr} to ${endDateStr} for group ${groupId}`);
+      // Get just the date part in YYYY-MM-DD format (in local timezone to avoid timezone issues)
+      // Instead of using toISOString() which converts to UTC, extract the date string properly
+      const startYear = start.getFullYear();
+      const startMonth = String(start.getMonth() + 1).padStart(2, '0');
+      const startDate = String(start.getDate()).padStart(2, '0');
+      const startDateStr = `${startYear}-${startMonth}-${startDate}`;
+      
+      const now = new Date();
+      const endYear = now.getFullYear();
+      const endMonth = String(now.getMonth() + 1).padStart(2, '0');
+      const endDate = String(now.getDate()).padStart(2, '0');
+      const endDateStr = `${endYear}-${endMonth}-${endDate}`;
+      
+      console.log(`📊 Payout Preview - Cycle ${group.current_cycle}`);
+      console.log(`   Fetching payments from ${startDateStr} to ${endDateStr} for group ${groupId}`);
+      console.log(`   Start Date (from DB): ${group.current_cycle_start_date}`);
       
       // Get members with user details using correct alias
       const { data: members, error: membersError } = await supabase
@@ -149,7 +162,16 @@ export const payoutService = {
         }
         
         const safePayments = payments || [];
-        console.log(`Member ${(member.users as any)?.name} has ${safePayments.length} payments`);
+        
+        // Log detailed payment info for debugging
+        if (safePayments.length > 0) {
+          console.log(`   ${(member.users as any)?.name}: ${safePayments.length} payment(s) found`);
+          safePayments.forEach(p => {
+            console.log(`      - ${p.payment_date}: ${p.amount} ${p.currency}`);
+          });
+        } else {
+          console.log(`   ${(member.users as any)?.name}: No payments found`);
+        }
         
         if (safePayments.length === 0) continue;
         
@@ -210,10 +232,10 @@ export const payoutService = {
         }
       }
       
-      console.log('Final payout items:', payoutItems);
+      console.log(`✅ Payout preview complete: ${payoutItems.length} members with data to payout`);
       return payoutItems;
     } catch (error) {
-      console.error('previewCyclePayout error:', error);
+      console.error('❌ previewCyclePayout error:', error);
       throw error;
     }
   },
