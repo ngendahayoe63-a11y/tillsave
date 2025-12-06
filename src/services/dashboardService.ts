@@ -74,6 +74,8 @@ export const dashboardService = {
         .gte('payout_date', monthStart.toISOString());
 
       if (payoutsError) throw payoutsError;
+      
+      console.log('Fetched payouts:', payouts);
 
       // 4. Get all payments for total calculation
       const { data: allPaymentsForTotal, error: allPaymentsError } = await supabase
@@ -138,6 +140,8 @@ export const dashboardService = {
         if (!totalEarnings['RWF']) totalEarnings['RWF'] = 0;
         totalEarnings['RWF'] += p.organizer_fee_total_rwf || 0;
       });
+      
+      console.log('Total earnings calculated:', totalEarnings);
 
       // 7. Get payments with group_id to calculate per-group totals
       const { data: allPaymentsWithGroup, error: allPaymentsGroupError } = await supabase

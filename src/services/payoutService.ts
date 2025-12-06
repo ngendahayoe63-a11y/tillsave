@@ -93,6 +93,10 @@ export const payoutService = {
       
       const start = new Date(group.current_cycle_start_date);
       const end = new Date();
+      const startDateStr = start.toISOString().split('T')[0]; // YYYY-MM-DD
+      const endDateStr = end.toISOString().split('T')[0];     // YYYY-MM-DD
+      
+      console.log(`Fetching payments from ${startDateStr} to ${endDateStr} for group ${groupId}`);
       
       // Get members with user details using correct alias
       const { data: members, error: membersError } = await supabase
@@ -110,18 +114,20 @@ export const payoutService = {
         throw membersError;
       }
       
+      console.log(`Found ${members?.length || 0} active members`);
+      
       if (!members || members.length === 0) return [];
       
       const payoutItems: PayoutItem[] = [];
       
       for (const member of members) {
-        // Get payments for this member
+        // Get payments for this member in the current cycle
         const { data: payments, error: paymentsError } = await supabase
           .from('payments')
           .select('amount, currency, payment_date')
           .eq('membership_id', member.id)
-          .gte('payment_date', start.toISOString().split('T')[0])
-          .lte('payment_date', end.toISOString().split('T')[0]);
+          .gte('payment_date', startDateStr)
+          .lte('payment_date', endDateStr);
         
         if (paymentsError) {
           console.error('Payments fetch error:', paymentsError);
@@ -129,6 +135,8 @@ export const payoutService = {
         }
         
         const safePayments = payments || [];
+        console.log(`Member ${(member.users as any)?.name} has ${safePayments.length} payments`);
+        
         if (safePayments.length === 0) continue;
         
         // Group payments by currency
@@ -146,7 +154,9 @@ export const payoutService = {
           .eq('is_active', true);
         
         if (ratesError) {
-          console.error('Rates fetch error:', ratesError);
+          console.error('Rates fetch error for member', member.id, ratesError);
+        } else {
+          console.log(`Member ${(member.users as any)?.name} has rates:`, rates);
         }
         
         // Access user info correctly from the users alias
@@ -161,6 +171,8 @@ export const payoutService = {
           
           const organizerFee = dailyRate; // 1 day's contribution = organizer fee
           
+          console.log(`Payout for ${userName} - Currency: ${currency}, Total: ${total}, Rate: ${dailyRate}, Fee: ${organizerFee}`);
+          
           payoutItems.push({
             membershipId: member.id,
             memberName: userName,
@@ -173,6 +185,7 @@ export const payoutService = {
         }
       }
       
+      console.log('Final payout items:', payoutItems);
       return payoutItems;
     } catch (error) {
       console.error('previewCyclePayout error:', error);
@@ -181,16 +194,69 @@ export const payoutService = {
   },
 
   finalizePayout: async (groupId: string, items: PayoutItem[]) => {
+    console.log('Finalizing payout with items:', items);
+    
     const totalFeeRWF = items.filter(i => i.currency === 'RWF').reduce((sum, i) => sum + i.organizerFee, 0);
+    console.log('Total organizer fee (RWF):', totalFeeRWF);
+    
     const { data: group } = await supabase.from('groups').select('current_cycle').eq('id', groupId).single();
     const currentCycle = group?.current_cycle || 1;
-    const { data: payout, error: payoutError } = await supabase.from('payouts').insert({ group_id: groupId, cycle_number: currentCycle, payout_date: new Date().toISOString(), organizer_fee_total_rwf: totalFeeRWF, total_distributed_count: items.length, status: 'CALCULATED' }).select().single();
-    if (payoutError) throw payoutError;
-    const dbItems = items.map(item => ({ payout_id: payout.id, membership_id: item.membershipId, currency: item.currency, days_contributed: item.daysContributed, gross_amount: item.totalSaved, organizer_fee: item.organizerFee, net_amount: item.netPayout, disbursement_status: 'PENDING' }));
+    
+    const payoutData = {
+      group_id: groupId,
+      cycle_number: currentCycle,
+      payout_date: new Date().toISOString(),
+      organizer_fee_total_rwf: totalFeeRWF,
+      total_distributed_count: items.length,
+      status: 'CALCULATED'
+    };
+    
+    console.log('Payout data to insert:', payoutData);
+    
+    const { data: payout, error: payoutError } = await supabase
+      .from('payouts')
+      .insert(payoutData)
+      .select()
+      .single();
+    
+    if (payoutError) {
+      console.error('Payout insert error:', payoutError);
+      throw payoutError;
+    }
+    
+    console.log('Payout created:', payout);
+    
+    const dbItems = items.map(item => ({
+      payout_id: payout.id,
+      membership_id: item.membershipId,
+      currency: item.currency,
+      days_contributed: item.daysContributed,
+      gross_amount: item.totalSaved,
+      organizer_fee: item.organizerFee,
+      net_amount: item.netPayout,
+      disbursement_status: 'PENDING'
+    }));
+    
     const { error: itemsError } = await supabase.from('payout_items').insert(dbItems);
-    if (itemsError) throw itemsError;
-    const { error: updateError } = await supabase.from('groups').update({ current_cycle: currentCycle + 1, current_cycle_start_date: new Date().toISOString() }).eq('id', groupId);
-    if (updateError) throw updateError;
+    if (itemsError) {
+      console.error('Payout items insert error:', itemsError);
+      throw itemsError;
+    }
+    
+    const { error: updateError } = await supabase
+      .from('groups')
+      .update({
+        current_cycle: currentCycle + 1,
+        current_cycle_start_date: new Date().toISOString()
+      })
+      .eq('id', groupId);
+    
+    if (updateError) {
+      console.error('Group update error:', updateError);
+      throw updateError;
+    }
+    
+    console.log('Payout finalized successfully');
     return payout;
   }
 };
