@@ -18,6 +18,9 @@ export interface MemberDashboardData {
   daysPaid: number;
   streakDays: number;
   healthScore: number;
+  memberRates?: Record<string, Record<string, number>>;
+  expectedPayments?: Record<string, number>;
+  previousCycleFees?: Record<string, number>;
 }
 
 export const dashboardService = {
@@ -208,7 +211,7 @@ export const dashboardService = {
           user_id, 
           status,
           joined_at,
-          groups(id, name, organizer_id, current_cycle_start_date, cycle_days)
+          groups(id, name, organizer_id, current_cycle_start_date, cycle_days, current_cycle)
         `)
         .eq('user_id', userId)
         .eq('status', 'ACTIVE');
@@ -222,7 +225,10 @@ export const dashboardService = {
           totalSaved: {},
           daysPaid: 0,
           streakDays: 0,
-          healthScore: 0
+          healthScore: 0,
+          memberRates: {},
+          expectedPayments: {},
+          previousCycleFees: {}
         };
       }
 
@@ -234,7 +240,7 @@ export const dashboardService = {
 
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
-        .select('id, amount, currency, payment_date, membership_id')
+        .select('id, amount, currency, payment_date, membership_id, created_at')
         .in('membership_id', membershipIds)
         .gte('payment_date', monthStart.toISOString())
         .order('payment_date', { ascending: false });
@@ -250,24 +256,77 @@ export const dashboardService = {
 
       if (goalsError) throw goalsError;
 
-      // 4. Calculate totals
+      // 4. Get member currency rates for expected payment calculation
+      const { data: rates, error: ratesError } = await supabase
+        .from('member_currency_rates')
+        .select('id, membership_id, currency, daily_rate, is_active')
+        .in('membership_id', membershipIds)
+        .eq('is_active', true);
+
+      if (ratesError) throw ratesError;
+
+      // 5. Get previous cycle payouts to show fees charged
+      const { data: previousPayouts, error: payoutsError } = await supabase
+        .from('payout_items')
+        .select('id, membership_id, currency, organizer_fee')
+        .in('membership_id', membershipIds)
+        .order('created_at', { ascending: false })
+        .limit(membershipIds.length * 2); // Get last few payouts per member
+
+      if (payoutsError) throw payoutsError;
+
+      // 6. Calculate totals
       const totalSaved: Record<string, number> = {};
       payments?.forEach(p => {
         if (!totalSaved[p.currency]) totalSaved[p.currency] = 0;
         totalSaved[p.currency] += p.amount;
       });
 
-      // 5. Calculate days paid this month
+      // 7. Calculate days paid this month
       const uniqueDays = new Set(
         payments?.map(p => new Date(p.payment_date).toDateString()) || []
       );
       const daysPaid = uniqueDays.size;
 
-      // 6. Calculate streak (consecutive days)
+      // 8. Calculate streak (consecutive days)
       const streakDays = calculateStreak(payments || []);
 
-      // 7. Calculate health score
+      // 9. Calculate health score
       const healthScore = calculateHealthScore(daysPaid, totalSaved, goals || []);
+
+      // 10. Calculate expected payments based on current rates and cycle progress
+      const expectedPayments: Record<string, number> = {};
+      memberships.forEach((membership: any) => {
+        const group = membership.groups;
+        if (group) {
+          const cycleStartDate = new Date(group.current_cycle_start_date);
+          const daysInCurrentCycle = Math.ceil((now.getTime() - cycleStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+          const memberRates = rates?.filter(r => r.membership_id === membership.id) || [];
+          memberRates.forEach((rate: any) => {
+            const expectedAmount = rate.daily_rate * daysInCurrentCycle;
+            if (!expectedPayments[rate.currency]) expectedPayments[rate.currency] = 0;
+            expectedPayments[rate.currency] += expectedAmount;
+          });
+        }
+      });
+
+      // 11. Get the most recent fees from previous cycle
+      const previousCycleFees: Record<string, number> = {};
+      previousPayouts?.forEach((payout: any) => {
+        if (!previousCycleFees[payout.currency]) previousCycleFees[payout.currency] = 0;
+        previousCycleFees[payout.currency] += payout.organizer_fee || 0;
+      });
+
+      // 12. Build member rates map for reference
+      const memberRates: Record<string, Record<string, number>> = {};
+      memberships.forEach((membership: any) => {
+        memberRates[membership.id] = {};
+        const memberRatesList = rates?.filter(r => r.membership_id === membership.id) || [];
+        memberRatesList.forEach((rate: any) => {
+          memberRates[membership.id][rate.currency] = rate.daily_rate;
+        });
+      });
 
       return {
         memberships,
@@ -276,7 +335,10 @@ export const dashboardService = {
         totalSaved,
         daysPaid,
         streakDays,
-        healthScore
+        healthScore,
+        memberRates,
+        expectedPayments,
+        previousCycleFees
       };
     } catch (error) {
       console.error('Error loading member dashboard:', error);

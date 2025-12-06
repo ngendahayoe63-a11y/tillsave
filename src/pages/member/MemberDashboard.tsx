@@ -6,15 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
 import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity } from 'lucide-react';
+import { Plus, PiggyBank, Target, TrendingUp, AlertCircle, Activity, DollarSign } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
+import { useState } from 'react';
 
 export const MemberDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { data: dashboardData, isLoading, error } = useMemberDashboard(user?.id);
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) {
@@ -175,6 +177,55 @@ export const MemberDashboard = () => {
           </div>
         </div>
 
+        {/* FEES & EXPECTED PAYMENT SECTION */}
+        {(dashboardData?.previousCycleFees && Object.keys(dashboardData.previousCycleFees).length > 0) || (dashboardData?.expectedPayments && Object.keys(dashboardData.expectedPayments).length > 0) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Previous Cycle Fees */}
+            {dashboardData?.previousCycleFees && Object.keys(dashboardData.previousCycleFees).length > 0 && (
+              <Card className="dark:bg-slate-900 shadow-sm ring-1 ring-orange-200 dark:ring-orange-900/30 border-l-4 border-l-orange-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-orange-500" /> Previous Cycle Fees
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(dashboardData.previousCycleFees).map(([currency, fee]) => (
+                    <div key={currency} className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{currency}</span>
+                      <span className="font-bold text-red-600 dark:text-red-400">-{(fee as number).toLocaleString()}</span>
+                    </div>
+                  ))}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    Fees charged from your previous cycle payout
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Expected Total Payment */}
+            {dashboardData?.expectedPayments && Object.keys(dashboardData.expectedPayments).length > 0 && (
+              <Card className="dark:bg-slate-900 shadow-sm ring-1 ring-blue-200 dark:ring-blue-900/30 border-l-4 border-l-blue-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-blue-500" /> Expected This Cycle
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(dashboardData.expectedPayments).map(([currency, amount]) => (
+                    <div key={currency} className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{currency}</span>
+                      <span className="font-bold text-green-600 dark:text-green-400">{(amount as number).toLocaleString()}</span>
+                    </div>
+                  ))}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    Based on your daily savings rate and days in this cycle
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : null}
+
         {/* MAIN CONTENT: Active Goals & Groups */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
@@ -222,13 +273,13 @@ export const MemberDashboard = () => {
             {/* Recent Activities */}
             {dashboardData?.payments && dashboardData.payments.length > 0 && (
               <Card className="dark:bg-slate-900 shadow-sm border-b-4 border-b-green-400">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 flex justify-between items-center">
                   <CardTitle className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <Activity className="h-4 w-4" /> Recent Activity
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {dashboardData.payments.slice(0, 5).map((payment: any, idx: number) => (
+                  {(showAllActivities ? dashboardData.payments : dashboardData.payments.slice(0, 3)).map((payment: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -245,6 +296,24 @@ export const MemberDashboard = () => {
                       </div>
                     </div>
                   ))}
+                  {!showAllActivities && dashboardData.payments.length > 3 && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-2"
+                      onClick={() => setShowAllActivities(true)}
+                    >
+                      View All Activities ({dashboardData.payments.length})
+                    </Button>
+                  )}
+                  {showAllActivities && dashboardData.payments.length > 3 && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mt-2"
+                      onClick={() => setShowAllActivities(false)}
+                    >
+                      Show Less
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )}
