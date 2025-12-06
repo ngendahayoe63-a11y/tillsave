@@ -84,7 +84,7 @@ export const payoutService = {
     const end = new Date();
     const analytics = await analyticsService.getGroupAnalytics(groupId);
     if (!analytics) throw new Error("Could not calculate analytics");
-    const { data: members } = await supabase.from('memberships').select('id, users(name)').eq('group_id', groupId).eq('status', 'ACTIVE');
+    const { data: members } = await supabase.from('memberships').select('id, users:user_id(name)').eq('group_id', groupId).eq('status', 'ACTIVE');
     if (!members) return [];
     const payoutItems: PayoutItem[] = [];
     for (const member of members) {
@@ -99,7 +99,8 @@ export const payoutService = {
         const dailyRate = rateObj ? rateObj.daily_rate : 0;
         const days = new Set(safePayments.filter(p => p.currency === currency).map(p => p.payment_date)).size;
         const fee = dailyRate; 
-        payoutItems.push({ membershipId: member.id, memberName: member.users?.[0]?.name || 'Unknown', currency, totalSaved: total, organizerFee: fee, netPayout: total - fee, daysContributed: days });
+        const userName = (member.users as any)?.name || 'Unknown';
+        payoutItems.push({ membershipId: member.id, memberName: userName, currency, totalSaved: total, organizerFee: fee, netPayout: total - fee, daysContributed: days });
       }
     }
     return payoutItems;

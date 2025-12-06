@@ -43,7 +43,7 @@ export const analyticsService = {
     // 1. Get total savings (all payments in this cycle)
     const { data: payments } = await supabase
       .from('payments')
-      .select('amount, currency, membership_id')
+      .select('amount, currency, membership_id, payment_date')
       .eq('group_id', groupId)
       .gte('payment_date', cycleStart.toISOString())
       .lte('payment_date', cycleEnd.toISOString());
@@ -91,11 +91,22 @@ export const analyticsService = {
       };
     }).filter(d => d.value > 0);
 
+    // Calculate actual days passed in cycle
+    const now = new Date();
+    const daysPassed = Math.min(
+      Math.ceil((now.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24)),
+      group.cycle_days
+    );
+    
+    // Count unique member-days with at least one payment
+    const memberDaysWithPayment = new Set(payments?.map(p => `${p.membership_id}-${new Date(p.payment_date).toDateString()}`) || []).size;
+    const expectedMemberDays = memberCount * daysPassed;
+    
     return {
       totalSavings,
       organizerEarnings,
-      completionRate: memberships ? ((payments?.length || 0) / (memberCount * group.cycle_days)) * 100 : 0,
-      missedPayments: Math.max(0, (memberCount * group.cycle_days) - (payments?.length || 0)),
+      completionRate: expectedMemberDays > 0 ? Math.round((memberDaysWithPayment / expectedMemberDays) * 100 * 10) / 10 : 0,
+      missedPayments: Math.max(0, expectedMemberDays - memberDaysWithPayment),
       chartData,
       memberCount
     };

@@ -74,7 +74,7 @@ export const AdvancedReportPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-1">
+              <div className="space-y-1 break-words">
                 {renderCurrencyList(stats.totalSavings, "No savings yet")}
               </div>
             </CardContent>
@@ -88,7 +88,7 @@ export const AdvancedReportPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-1">
+              <div className="space-y-1 break-words">
                  {renderCurrencyList(stats.organizerEarnings, "No earnings yet")}
               </div>
               <p className="text-[10px] mt-2 opacity-70">*Based on active members this month</p>
@@ -97,13 +97,13 @@ export const AdvancedReportPage = () => {
         </div>
 
         {/* --- EXISTING METRICS --- */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="dark:bg-slate-900 border-0">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
               <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full mb-2">
                 <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.completionRate}%</div>
+              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 line-clamp-1">{Math.round(stats.completionRate * 10) / 10}%</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Participation Rate</div>
             </CardContent>
           </Card>
