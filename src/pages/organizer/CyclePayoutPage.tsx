@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/toast';
 import { payoutService, PayoutItem } from '@/services/payoutService';
 import { groupsService } from '@/services/groupsService';
-import { generatePayoutPDF } from '@/utils/pdfGenerator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Download, CheckCircle, AlertTriangle } from 'lucide-react';
-import confetti from 'canvas-confetti'; // Import Confetti
+import { Loader2, ArrowLeft, CheckCircle, AlertTriangle, Printer } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import PayoutReportPDF from '@/components/payouts/PayoutReportPDF';
+import '@/styles/print.css';
 
 export const CyclePayoutPage = () => {
   const { groupId } = useParams();
@@ -18,8 +19,10 @@ export const CyclePayoutPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isFinalized, setIsFinalized] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   
   const [groupName, setGroupName] = useState('');
+  const [groupData, setGroupData] = useState<any>(null);
   const [payoutItems, setPayoutItems] = useState<PayoutItem[]>([]);
   const [totals, setTotals] = useState({ saved: {}, fees: {}, net: {} });
 
@@ -29,6 +32,7 @@ export const CyclePayoutPage = () => {
       try {
         const group = await groupsService.getGroupDetails(groupId);
         setGroupName(group.name);
+        setGroupData(group);
 
         const items = await payoutService.previewCyclePayout(groupId);
         setPayoutItems(items);
@@ -48,6 +52,11 @@ export const CyclePayoutPage = () => {
 
       } catch (error) {
         console.error(error);
+        addToast({
+          type: 'error',
+          title: 'Error loading payout data',
+          description: 'Please try again',
+        });
       } finally {
         setIsLoading(false);
       }
@@ -63,12 +72,11 @@ export const CyclePayoutPage = () => {
       await payoutService.finalizePayout(groupId, payoutItems);
       setIsFinalized(true);
       
-      // 🎉 FIRE CONFETTI! 🎉
       confetti({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#16a34a', '#2563eb', '#facc15'] // Green, Blue, Yellow
+        colors: ['#16a34a', '#2563eb', '#facc15']
       });
 
       addToast({
@@ -77,8 +85,10 @@ export const CyclePayoutPage = () => {
         description: 'Cycle closed and all records saved successfully',
       });
 
-      // Auto download PDF on finalize
-      generatePayoutPDF(groupName, payoutItems, totals.fees);
+      // Auto-print PDF
+      setTimeout(() => {
+        window.print();
+      }, 500);
     } catch (error: any) {
       addToast({
         type: 'error',
@@ -93,18 +103,59 @@ export const CyclePayoutPage = () => {
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
 
   if (isFinalized) {
+    if (showPreview) {
+      return (
+        <div className="min-h-screen bg-white dark:bg-slate-950">
+          <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center gap-4 no-print">
+            <Button variant="ghost" size="icon" onClick={() => setShowPreview(false)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold">Payout Report Preview</h1>
+            <div className="ml-auto flex gap-2">
+              <Button size="sm" onClick={() => window.print()}>
+                <Printer className="h-4 w-4 mr-2" /> Print / Save PDF
+              </Button>
+            </div>
+          </div>
+          <PayoutReportPDF
+            groupName={groupName}
+            cycleNumber={groupData?.current_cycle || 1}
+            cycleStartDate={new Date(groupData?.current_cycle_start_date)}
+            cycleEndDate={new Date()}
+            generatedDate={new Date()}
+            members={payoutItems.map(item => ({
+              name: item.memberName,
+              totalSaved: item.totalSaved,
+              organizerFee: item.organizerFee,
+              netPayout: item.netPayout,
+              daysContributed: item.daysContributed,
+              totalDays: item.daysContributed,
+              currency: item.currency
+            }))}
+            organizerName={groupData?.organizer_name || 'Unknown'}
+            organizerPhone={groupData?.organizer_phone || 'N/A'}
+            organizerEarnings={Object.entries(totals.fees).map(([currency, amount]) => ({
+              currency,
+              amount: amount as number
+            }))}
+            reportId={`RPT-${Date.now()}`}
+          />
+        </div>
+      );
+    }
+
     return (
-      <div className="p-8 flex flex-col items-center justify-center text-center min-h-screen bg-green-50 dark:bg-slate-950">
+      <div className="p-8 flex flex-col items-center justify-center text-center min-h-screen bg-gray-50 dark:bg-slate-950">
         <div className="h-20 w-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
           <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
         </div>
         <h1 className="text-2xl font-bold text-green-800 dark:text-green-400 mb-2">Cycle Closed Successfully!</h1>
         <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-xs">
-          The payout report has been generated and the records are saved.
+          The payout report has been generated and all records are saved.
         </p>
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={() => generatePayoutPDF(groupName, payoutItems, totals.fees)}>
-            <Download className="mr-2 h-4 w-4" /> Download PDF Again
+        <div className="flex gap-4 flex-wrap justify-center">
+          <Button variant="outline" onClick={() => setShowPreview(true)}>
+            <Printer className="mr-2 h-4 w-4" /> Preview & Print Report
           </Button>
           <Button onClick={() => navigate('/organizer')}>
             Back to Dashboard
@@ -125,6 +176,48 @@ export const CyclePayoutPage = () => {
 
       <main className="p-4 max-w-3xl mx-auto space-y-6 pb-28">
         
+        {/* Preview Button */}
+        <Button 
+          className="w-full no-print"
+          variant="outline"
+          onClick={() => setShowPreview(!showPreview)}
+        >
+          {showPreview ? '📋 Hide Preview' : '👁️ Preview Professional Report'}
+        </Button>
+
+        {showPreview && (
+          <div className="border-2 border-blue-300 rounded-lg p-4 bg-blue-50 dark:bg-blue-950 no-print">
+            <div className="mb-4 p-4 bg-white dark:bg-slate-900 rounded border border-blue-200 dark:border-blue-800">
+              <PayoutReportPDF
+                groupName={groupName}
+                cycleNumber={groupData?.current_cycle || 1}
+                cycleStartDate={new Date(groupData?.current_cycle_start_date)}
+                cycleEndDate={new Date()}
+                generatedDate={new Date()}
+                members={payoutItems.map(item => ({
+                  name: item.memberName,
+                  totalSaved: item.totalSaved,
+                  organizerFee: item.organizerFee,
+                  netPayout: item.netPayout,
+                  daysContributed: item.daysContributed,
+                  totalDays: item.daysContributed,
+                  currency: item.currency
+                }))}
+                organizerName={groupData?.organizer_name || 'Unknown'}
+                organizerPhone={groupData?.organizer_phone || 'N/A'}
+                organizerEarnings={Object.entries(totals.fees).map(([currency, amount]) => ({
+                  currency,
+                  amount: amount as number
+                }))}
+                reportId={`RPT-${Date.now()}`}
+              />
+            </div>
+            <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
+              Use print (Ctrl+P / Cmd+P) to save as PDF
+            </p>
+          </div>
+        )}
+
         {/* Warning Card */}
         <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-900/30">
           <CardContent className="p-4 flex gap-3">
@@ -165,7 +258,7 @@ export const CyclePayoutPage = () => {
       </main>
 
       {/* Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 safe-area">
+      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-800 safe-area no-print">
         <div className="max-w-3xl mx-auto flex gap-2 sm:gap-4">
           <Button variant="outline" className="flex-1 h-10 sm:h-11 text-xs sm:text-base" onClick={() => navigate(-1)}>
             Cancel
