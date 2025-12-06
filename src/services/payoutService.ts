@@ -165,13 +165,23 @@ export const payoutService = {
         
         // Create payout item for each currency
         for (const [currency, total] of Object.entries(currencyGroups)) {
-          const days = new Set(safePayments.filter(p => p.currency === currency).map(p => p.payment_date)).size;
+          const currencyPayments = safePayments.filter(p => p.currency === currency);
+          const days = new Set(currencyPayments.map(p => p.payment_date)).size;
+          
+          // Try to get daily rate from database first
+          let dailyRate = 0;
           const rateObj = rates?.find(r => r.currency === currency);
-          const dailyRate = rateObj ? rateObj.daily_rate : 0;
+          if (rateObj) {
+            dailyRate = rateObj.daily_rate;
+          } else {
+            // If no rate in database, calculate from actual payments: average per day
+            dailyRate = days > 0 ? Math.round((total as number) / days) : 0;
+            console.log(`Calculated daily rate for ${userName} (${currency}): ${total} / ${days} days = ${dailyRate}`);
+          }
           
           const organizerFee = dailyRate; // 1 day's contribution = organizer fee
           
-          console.log(`Payout for ${userName} - Currency: ${currency}, Total: ${total}, Rate: ${dailyRate}, Fee: ${organizerFee}`);
+          console.log(`Payout for ${userName} - Currency: ${currency}, Total: ${total}, Days: ${days}, Rate: ${dailyRate}, Fee: ${organizerFee}`);
           
           payoutItems.push({
             membershipId: member.id,
