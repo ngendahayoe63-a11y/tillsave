@@ -135,7 +135,7 @@ export const OrganizerDashboard = () => {
     ));
   };
 
-  const filteredGroups = (dashboardData?.groups || []).filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredGroups = (dashboardData?.groups || []).filter((g: any) => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) {
@@ -272,7 +272,7 @@ export const OrganizerDashboard = () => {
             {/* Groups Grid */}
             {filteredGroups.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredGroups.map(group => (
+                {filteredGroups.map((group: any) => (
                   <GroupCard key={group.id} group={group} role="ORGANIZER" />
                 ))}
               </div>
@@ -291,7 +291,7 @@ export const OrganizerDashboard = () => {
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Cycle History</h2>
                 <div className="space-y-4">
-                  {filteredGroups.map(group => {
+                  {filteredGroups.map((group: any) => {
                     const cycles = cycleHistories[group.id];
                     if (!cycles || cycles.length === 0) return null;
 

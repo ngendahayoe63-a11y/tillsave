@@ -105,10 +105,13 @@ export const RecordPaymentPage = () => {
 
     setIsSubmitting(true);
     try {
+      // Parse amount and ensure it's properly formatted (remove floating point errors)
+      const amount = Math.round(parseFloat(formData.amount) * 100) / 100;
+      
       await paymentsService.recordPayment(
         membershipId,
         groupId,
-        parseFloat(formData.amount),
+        amount,
         formData.currency,
         user.id,
         new Date(formData.date),

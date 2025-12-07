@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { dashboardService, OrganizerDashboardData, MemberDashboardData } from '@/services/dashboardService';
 
 /**
@@ -8,6 +8,7 @@ export const useOrganizerDashboard = (organizerId: string | undefined) => {
   const [data, setData] = useState<OrganizerDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,9 +32,13 @@ export const useOrganizerDashboard = (organizerId: string | undefined) => {
     };
 
     loadData();
-  }, [organizerId]);
+  }, [organizerId, refreshTrigger]);
 
-  return { data, isLoading, error };
+  const refresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  return { data, isLoading, error, refresh };
 };
 
 /**
@@ -43,6 +48,7 @@ export const useMemberDashboard = (userId: string | undefined) => {
   const [data, setData] = useState<MemberDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -66,9 +72,13 @@ export const useMemberDashboard = (userId: string | undefined) => {
     };
 
     loadData();
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
-  return { data, isLoading, error };
+  const refresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  return { data, isLoading, error, refresh };
 };
 
 /**
