@@ -28,7 +28,25 @@ export const CycleCalendar: React.FC<CycleCalendarProps> = ({
       end: cycleEnd
     });
 
-    const paidDaysSet = new Set(paidDays.map(d => format(new Date(d), 'yyyy-MM-dd')));
+    // Normalize paid days - handle both Date objects and date strings
+    const paidDaysSet = new Set(paidDays.map(d => {
+      let dateStr: string;
+      if (typeof d === 'string') {
+        // If it's already a string, try to parse it
+        const parsed = new Date(d);
+        // Check if parsing worked properly
+        if (isNaN(parsed.getTime())) {
+          // If direct parsing fails, assume it's already in YYYY-MM-DD format
+          dateStr = d;
+        } else {
+          dateStr = format(parsed, 'yyyy-MM-dd');
+        }
+      } else {
+        // If it's a Date object
+        dateStr = format(d, 'yyyy-MM-dd');
+      }
+      return dateStr;
+    }));
 
     return allDays.map(date => {
       const dateStr = format(date, 'yyyy-MM-dd');

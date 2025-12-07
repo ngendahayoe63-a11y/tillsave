@@ -516,11 +516,14 @@ export const MemberDashboard = () => {
                   const group = membership.groups;
                   if (!group) return null;
 
-                  // Get paid days for this membership
+                  // Get paid days for this membership - format as YYYY-MM-DD
                   const membershipPayments = dashboardData.payments.filter(
                     (p: any) => p.membership_id === membership.id
                   );
-                  const paidDays = membershipPayments.map((p: any) => p.payment_date);
+                  const paidDays = membershipPayments.map((p: any) => {
+                    const date = new Date(p.payment_date);
+                    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                  });
 
                   return (
                     <CycleCalendar

@@ -428,7 +428,10 @@ export const OrganizerDashboard = () => {
                 const groupPayments = dashboardData.recentPayments.filter(
                   (p: any) => p.group_id === group.id || p.memberships?.group_id === group.id
                 );
-                const paidDays = groupPayments.map((p: any) => p.payment_date);
+                const paidDays = groupPayments.map((p: any) => {
+                  const date = new Date(p.payment_date);
+                  return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                });
 
                 return (
                   <CycleCalendar

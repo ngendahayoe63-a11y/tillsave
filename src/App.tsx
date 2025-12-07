@@ -4,6 +4,7 @@ import { router } from '@/router';
 import { useAuthStore } from '@/store/authStore';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { ToastProvider } from '@/components/ui/toast';
+import { OfflineIndicator } from '@/components/shared/OfflineIndicator';
 import { PinLockScreen } from '@/components/auth/PinLockScreen'; // New Import
 import { Loader2 } from 'lucide-react';
 
@@ -55,6 +56,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="tillsave-theme">
       <ToastProvider>
+        <OfflineIndicator />
         {isLocked && isAuthenticated ? (
           <PinLockScreen onUnlock={() => setIsLocked(false)} />
         ) : (

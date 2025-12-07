@@ -24,8 +24,8 @@ export function PayoutConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white dark:bg-slate-900 w-full rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start gap-3 mb-6">
           <AlertTriangle className="h-6 w-6 text-orange-500 flex-shrink-0 mt-1" />

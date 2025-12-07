@@ -409,7 +409,7 @@ export const CyclePayoutPage = () => {
 
       {/* Confirmation Modal */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
           <Card className="w-full max-w-sm dark:bg-slate-900 max-h-[90vh] sm:max-h-none overflow-y-auto">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="flex items-center gap-2 dark:text-white text-base sm:text-lg">
