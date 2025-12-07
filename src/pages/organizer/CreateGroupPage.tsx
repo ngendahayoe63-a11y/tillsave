@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, Smartphone } from 'lucide-react';
+import { GroupType } from '@/types';
 
 export const CreateGroupPage = () => {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ export const CreateGroupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    cycleDays: 30
+    cycleDays: 30,
+    groupType: 'FULL_PLATFORM' as GroupType
   });
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -31,7 +33,8 @@ export const CreateGroupPage = () => {
       const newGroup = await groupsService.createGroup(
         user.id,
         formData.name,
-        formData.cycleDays
+        formData.cycleDays,
+        formData.groupType
       );
       
       addGroup(newGroup);
@@ -86,6 +89,57 @@ export const CreateGroupPage = () => {
                 min={1}
               />
               <p className="text-xs text-muted-foreground">Usually 30 days (1 month)</p>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label>Group Type</Label>
+              <p className="text-xs text-muted-foreground">Choose how you want to manage your group</p>
+              
+              <div className="space-y-2">
+                {/* Full Platform Option */}
+                <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition"
+                  style={{ borderColor: formData.groupType === 'FULL_PLATFORM' ? 'rgb(59, 130, 246)' : 'currentColor' }}>
+                  <input
+                    type="radio"
+                    name="groupType"
+                    value="FULL_PLATFORM"
+                    checked={formData.groupType === 'FULL_PLATFORM'}
+                    onChange={(e) => setFormData({...formData, groupType: e.target.value as GroupType})}
+                    className="mt-1 mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      <span className="font-medium">Full Platform</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Members download the app, create accounts, and track their savings themselves. Best for digital-first groups.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Organizer-Only Option */}
+                <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition"
+                  style={{ borderColor: formData.groupType === 'ORGANIZER_ONLY' ? 'rgb(59, 130, 246)' : 'currentColor' }}>
+                  <input
+                    type="radio"
+                    name="groupType"
+                    value="ORGANIZER_ONLY"
+                    checked={formData.groupType === 'ORGANIZER_ONLY'}
+                    onChange={(e) => setFormData({...formData, groupType: e.target.value as GroupType})}
+                    className="mt-1 mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">Organizer-Only (Cash-Based)</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You record all payments manually. Members just bring cash. You send them SMS updates. Perfect for groups without smartphones.
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

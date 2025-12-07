@@ -1,4 +1,5 @@
 import { supabase } from '@/api/supabase';
+import { GroupType } from '@/types';
 
 // Helper to generate a random 6-character code
 const generateJoinCode = () => {
@@ -9,7 +10,7 @@ export const groupsService = {
   /**
    * Create a new Savings Group (organizer is automatically added as a member)
    */
-  createGroup: async (organizerId: string, name: string, cycleDays: number = 30) => {
+  createGroup: async (organizerId: string, name: string, cycleDays: number = 30, groupType: GroupType = 'FULL_PLATFORM') => {
     let joinCode = generateJoinCode();
     let isUnique = false;
 
@@ -37,6 +38,7 @@ export const groupsService = {
         name,
         join_code: joinCode,
         cycle_days: cycleDays,
+        group_type: groupType,
         status: 'ACTIVE',
         current_cycle: 1,
         current_cycle_start_date: todayISO
@@ -46,25 +48,28 @@ export const groupsService = {
 
     if (error) throw error;
 
-    // Automatically add organizer as a member so they can save
-    try {
-      await supabase
-        .from('memberships')
-        .insert({
-          group_id: group.id,
-          user_id: organizerId,
-          status: 'ACTIVE',
-          joined_at: new Date().toISOString()
-        });
-    } catch (memberError: any) {
-      // Log the specific error for debugging
-      console.error('Error adding organizer as member:', memberError);
-      // If it's a duplicate key error, that's fine - membership already exists
-      if (memberError?.code === '23505') {
-        console.log('Organizer membership already exists, continuing');
-      } else {
-        // For other errors, still continue as group was created successfully
-        console.warn('Membership insert failed but group created. User may not be able to save immediately.');
+    // Automatically add organizer as a member (only for FULL_PLATFORM groups)
+    // For ORGANIZER_ONLY groups, members are added via organizerOnlyService
+    if (groupType === 'FULL_PLATFORM') {
+      try {
+        await supabase
+          .from('memberships')
+          .insert({
+            group_id: group.id,
+            user_id: organizerId,
+            status: 'ACTIVE',
+            joined_at: new Date().toISOString()
+          });
+      } catch (memberError: any) {
+        // Log the specific error for debugging
+        console.error('Error adding organizer as member:', memberError);
+        // If it's a duplicate key error, that's fine - membership already exists
+        if (memberError?.code === '23505') {
+          console.log('Organizer membership already exists, continuing');
+        } else {
+          // For other errors, still continue as group was created successfully
+          console.warn('Membership insert failed but group created. User may not be able to save immediately.');
+        }
       }
     }
 
