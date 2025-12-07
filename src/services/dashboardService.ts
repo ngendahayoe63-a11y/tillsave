@@ -86,15 +86,16 @@ export const dashboardService = {
       
       console.log('Fetched payouts:', payouts);
 
-      // 4. Get all payments for total calculation
+      // 4. Get all payments for total calculation - ONLY current cycle (not archived)
       const { data: allPaymentsForTotal, error: allPaymentsError } = await supabase
         .from('payments')
         .select('id, amount, currency')
-        .in('group_id', groupIds);
+        .in('group_id', groupIds)
+        .eq('archived', false);
 
       if (allPaymentsError) throw allPaymentsError;
 
-      // 4b. Get recent payments for display
+      // 4b. Get recent payments for display - ONLY current cycle
       const { data: recentPayments, error: paymentsError } = await supabase
         .from('payments')
         .select(`
@@ -102,16 +103,18 @@ export const dashboardService = {
           memberships(user_id, users(name))
         `)
         .in('group_id', groupIds)
+        .eq('archived', false)
         .order('payment_date', { ascending: false }) // Newest payments first (reverse chronological)
         .limit(10);
 
       if (paymentsError) throw paymentsError;
 
-      // 5. Get top performers
+      // 5. Get top performers - ONLY current cycle
       const { data: allPayments, error: topError } = await supabase
         .from('payments')
         .select('id, amount, currency, payment_date, memberships(user_id, users(id, name))')
         .in('group_id', groupIds)
+        .eq('archived', false)
         .gte('payment_date', monthStart.toISOString());
 
       if (topError) throw topError;
@@ -156,11 +159,12 @@ export const dashboardService = {
       
       console.log('Total earnings calculated:', totalEarnings);
 
-      // 7. Get payments with group_id to calculate per-group totals
+      // 7. Get payments with group_id to calculate per-group totals - ONLY current cycle
       const { data: allPaymentsWithGroup, error: allPaymentsGroupError } = await supabase
         .from('payments')
         .select('id, amount, currency, group_id')
-        .in('group_id', groupIds);
+        .in('group_id', groupIds)
+        .eq('archived', false);
 
       if (allPaymentsGroupError) throw allPaymentsGroupError;
 
@@ -234,7 +238,7 @@ export const dashboardService = {
 
       const membershipIds = memberships.map(m => m.id);
 
-      // 2. Get this month's payments
+      // 2. Get this month's payments - ONLY non-archived (current cycle) payments
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -242,6 +246,7 @@ export const dashboardService = {
         .from('payments')
         .select('id, amount, currency, payment_date, membership_id, recorded_at')
         .in('membership_id', membershipIds)
+        .eq('archived', false) // Only show current cycle payments
         .gte('payment_date', monthStart.toISOString())
         .order('payment_date', { ascending: false }); // Newest payments first (reverse chronological)
 
