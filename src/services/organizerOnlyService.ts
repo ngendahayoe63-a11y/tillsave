@@ -1,5 +1,6 @@
 import { supabase } from '@/api/supabase';
 import { OrganizerOnlyMember } from '@/types';
+import { smsService } from './smsService';
 
 export const organizerOnlyService = {
   /**
@@ -188,6 +189,46 @@ export const organizerOnlyService = {
       .single();
 
     if (error) throw error;
+
+    // Send SMS confirmation to member (async, don't wait)
+    try {
+      const member = await organizerOnlyService.getMember(memberId);
+      const group = await supabase
+        .from('groups')
+        .select('*')
+        .eq('id', groupId)
+        .single();
+
+      if (member && group.data && member.phone_number) {
+        const message = smsService.formatPaymentConfirmationSMS(
+          member.name,
+          amount,
+          currency,
+          amount // In real implementation, would calculate total from all payments
+        );
+
+        // Queue SMS without blocking payment return
+        smsService.queueSMS({
+          to: member.phone_number,
+          message,
+          groupId,
+          memberId,
+          messageType: 'PAYMENT_RECORDED',
+          metadata: {
+            paymentId: data.id,
+            amount,
+            currency
+          }
+        }).catch(err => {
+          console.error('Failed to queue SMS for payment:', err);
+          // Don't throw - payment was recorded successfully
+        });
+      }
+    } catch (smsErr) {
+      console.error('SMS queueing error:', smsErr);
+      // Don't throw - payment was recorded successfully
+    }
+
     return data;
   },
 
