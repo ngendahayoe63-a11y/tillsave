@@ -382,10 +382,48 @@ export const MemberDashboard = () => {
           </div>
         </div>
 
-        {/* CYCLE CALENDAR SECTION */}
+        {/* CYCLE CALENDAR & ANALYTICS SECTION - Phase 2 Complete */}
         {dashboardData?.memberships && dashboardData.memberships.length > 0 && (
           <div className="space-y-6">
-            {/* Analytics & Consistency Cards */}
+            {/* Performance Analytics Cards - NEW Phase 2 */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Performance Insights</h2>
+              
+              {/* Show consistency and history for each group */}
+              {dashboardData.memberships.map((membership: any) => {
+                const history = cycleHistories[membership.group_id];
+                const consistency = consistencyMetrics[membership.group_id];
+                
+                if (!history || !consistency) return null;
+                
+                return (
+                  <div key={membership.id} className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      {membership.groups?.name}
+                    </h3>
+                    
+                    {/* Consistency Card */}
+                    <MemberConsistencyCard
+                      cyclesPaidIn={consistency.cyclesPaidIn}
+                      totalCycles={consistency.totalCycles}
+                      streakDays={consistency.streakDays || 0}
+                      trend={consistency.trend || 'stable'}
+                    />
+                    
+                    {/* Cycle History - Expandable */}
+                    {history && history.length > 0 && (
+                      <CycleHistoryCard 
+                        groupId={membership.group_id}
+                        cycles={history.slice(0, 5)}
+                        userRole="MEMBER"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Cycle Calendar */}
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Your Performance</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
