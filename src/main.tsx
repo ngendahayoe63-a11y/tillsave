@@ -20,7 +20,13 @@ if ('serviceWorker' in navigator) {
         reg.update();
       }, 60 * 60 * 1000);
     }).catch(err => {
-      console.log('❌ Service Worker registration failed:', err);
+      // Note: MIME type errors in dev mode are expected (Vite doesn't serve sw.js)
+      // Service Worker will work fine in production
+      if (err.name === 'SecurityError' && import.meta.env.DEV) {
+        console.log('ℹ️ Service Worker: Dev mode - SW will be available in production');
+      } else {
+        console.warn('⚠️ Service Worker registration issue:', err);
+      }
     });
   });
 }
