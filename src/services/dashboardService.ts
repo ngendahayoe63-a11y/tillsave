@@ -89,7 +89,7 @@ export const dashboardService = {
       // 4. Get all payments for total calculation - ONLY current cycle (not archived)
       const { data: allPaymentsForTotal, error: allPaymentsError } = await supabase
         .from('payments')
-        .select('id, amount, currency')
+        .select('id, amount, currency, group_id')
         .in('group_id', groupIds)
         .eq('archived', false);
 
@@ -148,16 +148,40 @@ export const dashboardService = {
         totalManaged[p.currency] += p.amount;
       });
 
-      // Calculate earnings from actual payout_items (supports all currencies)
-      payouts?.forEach(p => {
-        const payoutItems = (p.payout_items as any[]) || [];
-        payoutItems.forEach(item => {
-          if (!totalEarnings[item.currency]) totalEarnings[item.currency] = 0;
-          totalEarnings[item.currency] += item.organizer_fee || 0;
+      // Calculate ESTIMATED earnings from CURRENT CYCLE (not from completed payouts)
+      // Earnings = organizer fee per member per group
+      // For each group, count active members and calculate their daily contribution as fee
+      if (groups.length > 0) {
+        groups.forEach((group: any) => {
+          const groupMembers = memberships?.filter(m => m.group_id === group.id) || [];
+          const memberCount = groupMembers.length;
+          
+          // Get group payments to calculate estimated organizer fee
+          // Organizer fee = 1 day's contribution per member
+          // So we need to estimate based on average or get from group configuration
+          // For now, calculate from actual payments - the organizer fee is the average of member payments
+          const groupPayments = allPaymentsForTotal?.filter(p => p.group_id === group.id) || [];
+          
+          if (groupPayments.length > 0 && memberCount > 0) {
+            // Group payments by currency
+            const paymentByCurrency: Record<string, number[]> = {};
+            groupPayments.forEach(p => {
+              if (!paymentByCurrency[p.currency]) paymentByCurrency[p.currency] = [];
+              paymentByCurrency[p.currency].push(p.amount);
+            });
+            
+            // Calculate average per currency
+            Object.entries(paymentByCurrency).forEach(([currency, amounts]) => {
+              const average = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+              const estimatedFee = average; // Organizer gets 1 day's worth per member
+              if (!totalEarnings[currency]) totalEarnings[currency] = 0;
+              totalEarnings[currency] += estimatedFee * memberCount;
+            });
+          }
         });
-      });
+      }
       
-      console.log('Total earnings calculated:', totalEarnings);
+      console.log('Total earnings calculated (estimated from current cycle):', totalEarnings);
 
       // 7. Get payments with group_id to calculate per-group totals - ONLY current cycle
       const { data: allPaymentsWithGroup, error: allPaymentsGroupError } = await supabase

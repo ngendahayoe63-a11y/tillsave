@@ -31,7 +31,6 @@ export const CyclePayoutPage = () => {
   const [payoutItems, setPayoutItems] = useState<PayoutItem[]>([]);
   const [totals, setTotals] = useState({ saved: {}, fees: {}, net: {} });
   const [organizerDetails, setOrganizerDetails] = useState<any>(null);
-  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   const loadData = async () => {
     if (!groupId || !currentUser) return;
@@ -75,7 +74,7 @@ export const CyclePayoutPage = () => {
 
   useEffect(() => {
     loadData();
-  }, [groupId, currentUser, reloadTrigger]);
+  }, [groupId, currentUser]);
 
   // Auto-open print dialog when finalized and preview is shown
   useEffect(() => {
@@ -144,12 +143,10 @@ export const CyclePayoutPage = () => {
         description: 'Members can now contribute to the new cycle.',
       });
 
-      // Reset state and reload fresh data for the new cycle
-      setShowCycleComplete(false);
-      setIsFinalized(false);
-      setShowPreview(false);
-      setShowConfirmDialog(false);
-      setReloadTrigger(prev => prev + 1); // Trigger data reload
+      // Navigate back to dashboard after a short delay to let the toast show
+      setTimeout(() => {
+        navigate('/organizer/dashboard', { replace: true });
+      }, 1000);
     } catch (error: any) {
       addToast({
         type: 'error',
