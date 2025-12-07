@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/toast';
+import { useAuthStore } from '@/store/authStore';
 import { organizerOnlyService } from '@/services/organizerOnlyService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Loader2, Plus, MessageSquare, Edit2, Trash2, X, Phone, Users } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Edit2, Trash2, X, Phone, Users, Eye } from 'lucide-react';
 import { OrganizerOnlyMember } from '@/types';
 
 interface OrganizerOnlyGroupDetailsProps {
@@ -15,6 +16,7 @@ interface OrganizerOnlyGroupDetailsProps {
 
 export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroupDetailsProps) => {
   const { addToast } = useToast();
+  const { user } = useAuthStore();
 
   const [members, setMembers] = useState<OrganizerOnlyMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +24,8 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
   const [showAddMember, setShowAddMember] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [showMemberSummary, setShowMemberSummary] = useState(false);
+  const [memberSummary, setMemberSummary] = useState<any>(null);
   
   const [newMemberForm, setNewMemberForm] = useState({
     name: '',
@@ -103,19 +107,42 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMemberId || !paymentForm.amount) return;
+    if (!selectedMemberId || !paymentForm.amount || !user) return;
 
     try {
-      // TODO: Record payment via paymentService
-      // For now, just show success
+      const amount = parseFloat(paymentForm.amount);
+      if (isNaN(amount) || amount <= 0) {
+        addToast({
+          type: 'error',
+          title: 'Invalid amount',
+          description: 'Please enter a valid amount',
+        });
+        return;
+      }
+
+      // Record payment for organizer-only member
+      await organizerOnlyService.recordPayment(
+        selectedMemberId,
+        group.id,
+        amount,
+        group.currency || 'RWF',
+        user.id,
+        new Date(),
+        paymentForm.notes || undefined
+      );
+
       addToast({
         type: 'success',
         title: 'Payment recorded',
-        description: `${paymentForm.amount} recorded for selected member`,
+        description: `${amount} ${group.currency || 'RWF'} recorded successfully`,
       });
+      
       setPaymentForm({ amount: '', notes: '' });
       setShowPaymentForm(false);
       setSelectedMemberId(null);
+      
+      // Reload members to show updated data
+      await loadMembers();
     } catch (error: any) {
       addToast({
         type: 'error',
@@ -132,6 +159,20 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
       title: 'SMS feature coming soon',
       description: 'This feature will be available after Phase 2',
     });
+  };
+
+  const handleViewSummary = async (memberId: string) => {
+    try {
+      const summary = await organizerOnlyService.getMemberSummary(groupId, memberId, group);
+      setMemberSummary(summary);
+      setShowMemberSummary(true);
+    } catch (error: any) {
+      addToast({
+        type: 'error',
+        title: 'Failed to load summary',
+        description: error.message,
+      });
+    }
   };
 
   const filteredMembers = members.filter(member =>
@@ -281,6 +322,15 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8"
+                      onClick={() => handleViewSummary(member.id)}
+                      title="View summary"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-purple-600" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
                       onClick={() => {
                         setSelectedMemberId(member.id);
                         setShowPaymentForm(true);
@@ -358,6 +408,102 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
                   Record Payment
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Member Summary Modal */}
+      {showMemberSummary && memberSummary && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-4 z-50">
+          <Card className="w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 sticky top-0 bg-white dark:bg-slate-900">
+              <CardTitle className="text-lg">Member Summary</CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowMemberSummary(false);
+                  setMemberSummary(null);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Member Name & Phone */}
+              <div className="border-b pb-4">
+                <p className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                  {memberSummary.member.name}
+                </p>
+                <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                  <Phone className="h-4 w-4" />
+                  {memberSummary.member.phone_number}
+                </p>
+                {memberSummary.member.email && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {memberSummary.member.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Totals by Currency */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">AMOUNTS</p>
+                {Object.entries(memberSummary.totalSaved).map(([currency, total]) => (
+                  <div key={currency} className="flex justify-between mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Total Saved ({currency}):
+                    </span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {(total as number).toLocaleString()} {currency}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Payment Details */}
+              <div className="border-t pt-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-3">PAYMENT HISTORY</p>
+                {memberSummary.payments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No payments yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {memberSummary.payments.map((payment: any) => (
+                      <div key={payment.id} className="flex justify-between text-sm p-2 bg-muted rounded">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {new Date(payment.payment_date).toLocaleDateString()}
+                        </span>
+                        <span className="font-medium">
+                          {payment.amount.toLocaleString()} {payment.currency}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Count */}
+              <div className="border-t pt-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">PAYMENT COUNT</p>
+                {Object.entries(memberSummary.paymentCount).map(([currency, count]) => (
+                  <p key={currency} className="text-sm text-gray-600 dark:text-gray-400">
+                    {String(count)} payment(s) in {currency}
+                  </p>
+                ))}
+              </div>
+
+              {/* Close Button */}
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => {
+                  setShowMemberSummary(false);
+                  setMemberSummary(null);
+                }}
+              >
+                Close
+              </Button>
             </CardContent>
           </Card>
         </div>

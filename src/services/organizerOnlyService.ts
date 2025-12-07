@@ -157,5 +157,118 @@ export const organizerOnlyService = {
 
     if (error) throw error;
     return data as OrganizerOnlyMember[];
+  },
+
+  /**
+   * Record a payment for an organizer-only member (cash payment)
+   */
+  recordPayment: async (
+    memberId: string,
+    groupId: string,
+    amount: number,
+    currency: string,
+    recordedBy: string,
+    paymentDate: Date = new Date(),
+    notes?: string
+  ) => {
+    const { data, error } = await supabase
+      .from('payments')
+      .insert({
+        organizer_only_member_id: memberId,
+        group_id: groupId,
+        amount: amount,
+        currency: currency,
+        recorded_by: recordedBy,
+        payment_date: paymentDate.toISOString(),
+        status: 'CONFIRMED',
+        payment_method: 'CASH',
+        notes: notes
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Get all payments for a member
+   */
+  getMemberPayments: async (memberId: string) => {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('organizer_only_member_id', memberId)
+      .eq('status', 'CONFIRMED')
+      .order('payment_date', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get all payments for a group (all members)
+   */
+  getGroupPayments: async (groupId: string) => {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('group_id', groupId)
+      .not('organizer_only_member_id', 'is', null)
+      .eq('status', 'CONFIRMED')
+      .order('payment_date', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Calculate summary for a member in current cycle
+   */
+  getMemberSummary: async (groupId: string, memberId: string, group: any) => {
+    // Get member details
+    const member = await organizerOnlyService.getMember(memberId);
+    
+    // Get member's payments in current cycle
+    const payments = await supabase
+      .from('payments')
+      .select('*')
+      .eq('organizer_only_member_id', memberId)
+      .eq('group_id', groupId)
+      .eq('status', 'CONFIRMED')
+      .gte('payment_date', group.current_cycle_start_date)
+      .order('payment_date', { ascending: true });
+
+    if (payments.error) throw payments.error;
+
+    // Group payments by currency
+    const paymentsByCurrency: Record<string, any[]> = {};
+    (payments.data || []).forEach(payment => {
+      if (!paymentsByCurrency[payment.currency]) {
+        paymentsByCurrency[payment.currency] = [];
+      }
+      paymentsByCurrency[payment.currency].push(payment);
+    });
+
+    // Calculate totals per currency
+    const totals: Record<string, number> = {};
+    const paymentCounts: Record<string, number> = {};
+    
+    Object.entries(paymentsByCurrency).forEach(([currency, currPayments]) => {
+      const total = currPayments.reduce((sum, p) => sum + p.amount, 0);
+      totals[currency] = total;
+      paymentCounts[currency] = currPayments.length;
+    });
+
+    return {
+      member,
+      totalSaved: totals,
+      paymentCount: paymentCounts,
+      payments: payments.data || [],
+      cycleStartDate: group.current_cycle_start_date,
+      cycleDays: group.cycle_days,
+      currency: group.currency || 'RWF'
+    };
   }
 };
+
