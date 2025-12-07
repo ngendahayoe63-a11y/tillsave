@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MemberGroupCard } from '@/components/groups/MemberGroupCard';
@@ -14,10 +15,12 @@ import { format, differenceInCalendarDays } from 'date-fns';
 import { useMemberDashboard } from '@/hooks/useDashboard';
 import { useState, useEffect } from 'react';
 import { dashboardService } from '@/services/dashboardService';
+import { notificationService } from '@/services/notificationService';
 
 export const MemberDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const { data: dashboardData, isLoading, error } = useMemberDashboard(user?.id);
   const [showAllActivities, setShowAllActivities] = useState(false);
@@ -40,6 +43,45 @@ export const MemberDashboard = () => {
       }
     });
   }, [user?.id, dashboardData?.memberships]);
+
+  // Setup real-time payment notifications for member
+  useEffect(() => {
+    if (!user?.id || !dashboardData?.memberships || dashboardData.memberships.length === 0) return;
+
+    const membershipIds = dashboardData.memberships.map((m: any) => m.id);
+    const groupIds = dashboardData.memberships.map((m: any) => m.group_id);
+
+    // Subscribe to new payments for this member
+    notificationService.subscribeToMemberPayments(membershipIds, (notification) => {
+      if (notification.type === 'payment_recorded') {
+        addToast({
+          type: 'success',
+          title: '✅ Payment Recorded!',
+          description: `${notification.amount?.toLocaleString()} ${notification.currency} recorded on ${format(new Date(notification.paymentDate || ''), 'MMM d, yyyy')}`,
+          duration: 5000,
+        });
+      }
+    });
+
+    // Subscribe to cycle finalizations for each group
+    groupIds.forEach((groupId: string) => {
+      notificationService.subscribeToPayouts(groupId, (notification) => {
+        if (notification.type === 'cycle_finalized') {
+          addToast({
+            type: 'success',
+            title: '🎉 Cycle Finalized!',
+            description: `Your payout is ready. Check the payout preview for details.`,
+            duration: 5000,
+          });
+        }
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      notificationService.unsubscribeAll();
+    };
+  }, [user?.id, dashboardData?.memberships, addToast]);
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) {

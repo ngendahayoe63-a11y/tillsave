@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { payoutService, PayoutItem } from '@/services/payoutService';
 import { groupsService } from '@/services/groupsService';
+import { notificationService } from '@/services/notificationService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, CheckCircle, AlertTriangle, Printer } from 'lucide-react';
@@ -94,6 +95,13 @@ export const CyclePayoutPage = () => {
     try {
       await payoutService.finalizePayout(groupId, payoutItems);
       setIsFinalized(true);
+      
+      // Notify all members that cycle has been finalized
+      notificationService.subscribeToPayouts(groupId, (notification) => {
+        if (notification.type === 'cycle_finalized') {
+          console.log('✅ Cycle finalization notification triggered for members');
+        }
+      });
       
       confetti({
         particleCount: 150,
