@@ -38,7 +38,10 @@ CREATE INDEX IF NOT EXISTS idx_sms_logs_created ON sms_logs(created_at DESC);
 
 -- Apply RLS policies for SMS logs
 -- Organizers can view SMS logs for their groups
-CREATE POLICY IF NOT EXISTS sms_logs_select_organizer 
+DROP POLICY IF EXISTS sms_logs_select_organizer ON sms_logs;
+DROP POLICY IF EXISTS sms_logs_insert_organizer ON sms_logs;
+
+CREATE POLICY sms_logs_select_organizer 
 ON sms_logs FOR SELECT
 USING (
   EXISTS (
@@ -48,7 +51,7 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS sms_logs_insert_organizer
+CREATE POLICY sms_logs_insert_organizer
 ON sms_logs FOR INSERT
 WITH CHECK (
   EXISTS (
