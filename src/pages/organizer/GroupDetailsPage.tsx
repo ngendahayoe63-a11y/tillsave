@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { groupsService } from '@/services/groupsService';
 import { notificationService } from '@/services/notificationService';
+import { OrganizerOnlyGroupDetails } from '@/components/groups/OrganizerOnlyGroupDetails';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -121,6 +122,11 @@ export const GroupDetailsPage = () => {
       </header>
 
       <main className="p-4 max-w-7xl mx-auto">
+        {/* Conditional Rendering: Organizer-Only vs Full Platform */}
+        {group.group_type === 'ORGANIZER_ONLY' ? (
+          <OrganizerOnlyGroupDetails groupId={groupId || ''} group={group} />
+        ) : (
+        <>
         {/* Toolbar: Search + Invite */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full sm:w-72">
@@ -244,6 +250,8 @@ export const GroupDetailsPage = () => {
              </div>
           )}
         </div>
+        </>
+        )}
       </main>
     </div>
   );
