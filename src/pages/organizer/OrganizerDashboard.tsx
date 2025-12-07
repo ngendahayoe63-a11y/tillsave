@@ -26,6 +26,7 @@ export const OrganizerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cycleHistories, setCycleHistories] = useState<Record<string, any[]>>({});
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [totalActiveCycles, setTotalActiveCycles] = useState(0);
   
   // State for modal
   const [showStatsModal, setShowStatsModal] = useState(false);
@@ -45,6 +46,23 @@ export const OrganizerDashboard = () => {
       }
     });
   }, [dashboardData?.groups]);
+
+  // Load total active cycles
+  useEffect(() => {
+    if (!user?.id || !dashboardData?.groups || dashboardData.groups.length === 0) return;
+
+    const loadTotalCycles = async () => {
+      try {
+        const breakdown = await getOrganizerCyclesBreakdown(user.id);
+        const total = breakdown.reduce((sum, item) => sum + (item.value as number), 0);
+        setTotalActiveCycles(total);
+      } catch (err) {
+        console.error('Error loading total cycles:', err);
+      }
+    };
+
+    loadTotalCycles();
+  }, [user?.id, dashboardData?.groups]);
 
   // Setup real-time member join notifications for all groups
   useEffect(() => {
@@ -115,6 +133,9 @@ export const OrganizerDashboard = () => {
     if (!user?.id) return;
     try {
       const breakdown = await getOrganizerCyclesBreakdown(user.id);
+      // Calculate total cycles across all groups
+      const total = breakdown.reduce((sum, item) => sum + (item.value as number), 0);
+      setTotalActiveCycles(total);
       setStatsModalTitle('Active Cycles by Group');
       setStatsModalDetails(breakdown);
       setShowStatsModal(true);
@@ -238,7 +259,7 @@ export const OrganizerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Active Cycles</p>
-                  <h3 className="text-xl sm:text-2xl font-bold mt-1 dark:text-white">{dashboardData?.groups?.length || 0}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 dark:text-white">{totalActiveCycles || 0}</h3>
                   <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Click for details</p>
                 </div>
                 <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
