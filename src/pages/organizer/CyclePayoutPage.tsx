@@ -412,35 +412,35 @@ export const CyclePayoutPage = () => {
 
       {/* Confirmation Modal */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-sm dark:bg-slate-900">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 dark:text-white">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                Confirm Finalization
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
+          <Card className="w-full max-w-sm dark:bg-slate-900 max-h-[90vh] sm:max-h-none overflow-y-auto">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 dark:text-white text-base sm:text-lg">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                <span className="truncate">Confirm Finalization</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                 Are you sure you want to finalize this cycle? This will:
               </p>
-              <ul className="text-sm space-y-2 text-gray-600 dark:text-gray-300 list-disc list-inside">
-                <li>Lock all calculations permanently</li>
-                <li>Record all member payouts</li>
-                <li>Close this cycle and start a new one</li>
+              <ul className="text-xs sm:text-sm space-y-2 text-gray-600 dark:text-gray-300 list-disc list-inside">
+                <li className="break-words">Lock all calculations permanently</li>
+                <li className="break-words">Record all member payouts</li>
+                <li className="break-words">Close this cycle and start a new one</li>
               </ul>
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-200 dark:border-yellow-800">
-                <p className="text-xs text-yellow-800 dark:text-yellow-300">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 sm:p-3 rounded border border-yellow-200 dark:border-yellow-800">
+                <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-300 break-words">
                   ⚠️ This action cannot be undone
                 </p>
               </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setShowConfirmDialog(false)}>
+              <div className="flex gap-2 sm:gap-3 pt-2">
+                <Button variant="outline" className="flex-1 h-10 sm:h-11 text-xs sm:text-sm" onClick={() => setShowConfirmDialog(false)}>
                   Cancel
                 </Button>
-                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleConfirmFinalize()} disabled={isSaving}>
-                  {isSaving && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-                  Yes, Finalize
+                <Button className="flex-1 h-10 sm:h-11 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm" onClick={() => handleConfirmFinalize()} disabled={isSaving}>
+                  {isSaving && <Loader2 className="animate-spin mr-1 sm:mr-2 h-4 w-4" />}
+                  <span className="truncate">Yes, Finalize</span>
                 </Button>
               </div>
             </CardContent>
