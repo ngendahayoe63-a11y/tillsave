@@ -9,12 +9,13 @@ import { DashboardSkeleton } from '@/components/shared/DashboardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CycleCalendar } from '@/components/dashboard/CycleCalendar';
 import { OrganizerCycleHistoryCard } from '@/components/analytics/OrganizerCycleHistoryCard';
+import { StatsDetailModal, StatDetail } from '@/components/modals/StatsDetailModal';
 import { Plus, Users, Wallet, TrendingUp, AlertCircle, Clock, Search, Activity } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { useOrganizerDashboard } from '@/hooks/useDashboard';
-import { dashboardService } from '@/services/dashboardService';
+import { dashboardService, getOrganizerManagedFundsBreakdown, getOrganizerEarningsBreakdown, getOrganizerMembersBreakdown, getOrganizerCyclesBreakdown } from '@/services/dashboardService';
 import { notificationService } from '@/services/notificationService';
 
 export const OrganizerDashboard = () => {
@@ -25,6 +26,11 @@ export const OrganizerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cycleHistories, setCycleHistories] = useState<Record<string, any[]>>({});
   const [showAllActivities, setShowAllActivities] = useState(false);
+  
+  // State for modal
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [statsModalTitle, setStatsModalTitle] = useState('');
+  const [statsModalDetails, setStatsModalDetails] = useState<StatDetail[]>([]);
 
   // Load cycle history for each group
   useEffect(() => {
@@ -64,6 +70,59 @@ export const OrganizerDashboard = () => {
       notificationService.unsubscribeAll();
     };
   }, [dashboardData?.groups, addToast]);
+
+  // Click handlers for stat cards
+  const handleShowMembersBreakdown = async () => {
+    if (!user?.id) return;
+    try {
+      const breakdown = await getOrganizerMembersBreakdown(user.id);
+      setStatsModalTitle('Members Breakdown by Group');
+      setStatsModalDetails(breakdown);
+      setShowStatsModal(true);
+    } catch (error) {
+      console.error('Error loading members breakdown:', error);
+      addToast({ type: 'error', title: 'Error loading breakdown' });
+    }
+  };
+
+  const handleShowManagedBreakdown = async () => {
+    if (!user?.id) return;
+    try {
+      const breakdown = await getOrganizerManagedFundsBreakdown(user.id);
+      setStatsModalTitle('Total Managed Funds by Group');
+      setStatsModalDetails(breakdown);
+      setShowStatsModal(true);
+    } catch (error) {
+      console.error('Error loading managed funds breakdown:', error);
+      addToast({ type: 'error', title: 'Error loading breakdown' });
+    }
+  };
+
+  const handleShowEarningsBreakdown = async () => {
+    if (!user?.id) return;
+    try {
+      const breakdown = await getOrganizerEarningsBreakdown(user.id);
+      setStatsModalTitle('Your Earnings by Group');
+      setStatsModalDetails(breakdown);
+      setShowStatsModal(true);
+    } catch (error) {
+      console.error('Error loading earnings breakdown:', error);
+      addToast({ type: 'error', title: 'Error loading breakdown' });
+    }
+  };
+
+  const handleShowCyclesBreakdown = async () => {
+    if (!user?.id) return;
+    try {
+      const breakdown = await getOrganizerCyclesBreakdown(user.id);
+      setStatsModalTitle('Active Cycles by Group');
+      setStatsModalDetails(breakdown);
+      setShowStatsModal(true);
+    } catch (error) {
+      console.error('Error loading cycles breakdown:', error);
+      addToast({ type: 'error', title: 'Error loading breakdown' });
+    }
+  };
 
   // Helper to render currencies
   const renderCurrencyLine = (data: Record<string, number> | undefined) => {
@@ -111,14 +170,16 @@ export const OrganizerDashboard = () => {
 
         {/* STATS GRID (1 col mobile, 2 col tablet, 4 col desktop) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+          <Card 
+            onClick={handleShowMembersBreakdown}
+            className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-900 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Members</p>
                   <h3 className="text-xl sm:text-2xl font-bold mt-1 dark:text-white">{dashboardData?.totalMembers || 0}</h3>
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
-                    <TrendingUp className="w-3 h-3 mr-1" /> Active
+                    <TrendingUp className="w-3 h-3 mr-1" /> Click for details
                   </p>
                 </div>
                 <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -128,7 +189,9 @@ export const OrganizerDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+          <Card 
+            onClick={handleShowManagedBreakdown}
+            className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-900 cursor-pointer hover:bg-green-50/50 dark:hover:bg-green-900/10">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
@@ -136,6 +199,9 @@ export const OrganizerDashboard = () => {
                   <div className="mt-1 space-y-1 dark:text-white text-sm sm:text-base">
                     {renderCurrencyLine(dashboardData?.totalManaged)}
                   </div>
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
+                    <TrendingUp className="w-3 h-3 mr-1" /> Click for details
+                  </p>
                 </div>
                 <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <Wallet className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -144,7 +210,9 @@ export const OrganizerDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+          <Card 
+            onClick={handleShowEarningsBreakdown}
+            className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-900 cursor-pointer hover:bg-purple-50/50 dark:hover:bg-purple-900/10">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
@@ -152,6 +220,9 @@ export const OrganizerDashboard = () => {
                   <div className="mt-1 space-y-1 dark:text-white text-sm sm:text-base">
                     {renderCurrencyLine(dashboardData?.totalEarnings)}
                   </div>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center mt-1">
+                    <TrendingUp className="w-3 h-3 mr-1" /> Click for details
+                  </p>
                 </div>
                 <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -160,13 +231,15 @@ export const OrganizerDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow dark:bg-slate-900">
+          <Card 
+            onClick={handleShowCyclesBreakdown}
+            className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-900 cursor-pointer hover:bg-orange-50/50 dark:hover:bg-orange-900/10">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Active Cycles</p>
                   <h3 className="text-xl sm:text-2xl font-bold mt-1 dark:text-white">{dashboardData?.groups?.length || 0}</h3>
-                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">In progress</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Click for details</p>
                 </div>
                 <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                   <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -349,6 +422,15 @@ export const OrganizerDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* STATS DETAIL MODAL */}
+        <StatsDetailModal
+          isOpen={showStatsModal}
+          title={statsModalTitle}
+          description="Detailed breakdown by group"
+          details={statsModalDetails}
+          onClose={() => setShowStatsModal(false)}
+        />
       </div>
     </div>
   );

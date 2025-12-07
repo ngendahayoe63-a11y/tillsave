@@ -681,3 +681,169 @@ function calculateHealthScore(
 
   return Math.round(score);
 }
+
+/**
+ * Get managed funds breakdown by group for organizer
+ */
+export const getOrganizerManagedFundsBreakdown = async (organizerId: string) => {
+  try {
+    const { data: groups } = await supabase
+      .from('groups')
+      .select('id, name, current_cycle')
+      .eq('organizer_id', organizerId)
+      .eq('status', 'ACTIVE');
+
+    if (!groups) return [];
+
+    const breakdown = await Promise.all(
+      groups.map(async (group: any) => {
+        const { data: payments } = await supabase
+          .from('payments')
+          .select('amount, currency')
+          .eq('group_id', group.id)
+          .eq('archived', false);
+
+        const total = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+        const currency = payments?.[0]?.currency || 'RWF';
+
+        return {
+          groupId: group.id,
+          groupName: group.name,
+          value: total,
+          currency: currency,
+          cycle: group.current_cycle,
+          additionalInfo: `Cycle ${group.current_cycle} | ${total.toLocaleString()} in managed funds`,
+        };
+      })
+    );
+
+    return breakdown;
+  } catch (error) {
+    console.error('Error getting managed funds breakdown:', error);
+    return [];
+  }
+};
+
+/**
+ * Get organizer earnings breakdown by group
+ */
+export const getOrganizerEarningsBreakdown = async (organizerId: string) => {
+  try {
+    const { data: groups } = await supabase
+      .from('groups')
+      .select('id, name, current_cycle')
+      .eq('organizer_id', organizerId)
+      .eq('status', 'ACTIVE');
+
+    if (!groups) return [];
+
+    const breakdown = await Promise.all(
+      groups.map(async (group: any) => {
+        // Get all payouts for this group
+        const { data: payouts } = await supabase
+          .from('payout_items')
+          .select('organizer_fee, currency, payouts(cycle_number)')
+          .in('payout_id', 
+            (await supabase
+              .from('payouts')
+              .select('id')
+              .eq('group_id', group.id)).data?.map((p: any) => p.id) || []
+          );
+
+        const totalEarnings = payouts?.reduce((sum, item: any) => sum + (item.organizer_fee || 0), 0) || 0;
+        const currency = payouts?.[0]?.currency || 'RWF';
+        const lastCycle = payouts?.[0]?.payouts?.[0]?.cycle_number || group.current_cycle;
+
+        return {
+          groupId: group.id,
+          groupName: group.name,
+          value: totalEarnings,
+          currency: currency,
+          cycle: lastCycle,
+          additionalInfo: `Earned ${totalEarnings.toLocaleString()} ${currency} as organizer fee`,
+        };
+      })
+    );
+
+    return breakdown;
+  } catch (error) {
+    console.error('Error getting earnings breakdown:', error);
+    return [];
+  }
+};
+
+/**
+ * Get member count breakdown by group
+ */
+export const getOrganizerMembersBreakdown = async (organizerId: string) => {
+  try {
+    const { data: groups } = await supabase
+      .from('groups')
+      .select('id, name, current_cycle')
+      .eq('organizer_id', organizerId)
+      .eq('status', 'ACTIVE');
+
+    if (!groups) return [];
+
+    const breakdown = await Promise.all(
+      groups.map(async (group: any) => {
+        const { data: members } = await supabase
+          .from('memberships')
+          .select('id')
+          .eq('group_id', group.id)
+          .eq('status', 'ACTIVE');
+
+        return {
+          groupId: group.id,
+          groupName: group.name,
+          value: members?.length || 0,
+          cycle: group.current_cycle,
+          additionalInfo: `${members?.length || 0} active members in this group`,
+        };
+      })
+    );
+
+    return breakdown;
+  } catch (error) {
+    console.error('Error getting members breakdown:', error);
+    return [];
+  }
+};
+
+/**
+ * Get active cycles breakdown by group
+ */
+export const getOrganizerCyclesBreakdown = async (organizerId: string) => {
+  try {
+    const { data: groups } = await supabase
+      .from('groups')
+      .select('id, name, current_cycle, current_cycle_start_date, cycle_days, status')
+      .eq('organizer_id', organizerId)
+      .eq('status', 'ACTIVE');
+
+    if (!groups) return [];
+
+    const breakdown = groups.map((group: any) => {
+      const startDate = new Date(group.current_cycle_start_date);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + group.cycle_days);
+      const now = new Date();
+      const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+      return {
+        groupId: group.id,
+        groupName: group.name,
+        value: group.current_cycle,
+        cycle: group.current_cycle,
+        cycleStatus: daysRemaining > 0 ? 'In Progress' : 'Completed',
+        additionalInfo: `Cycle ${group.current_cycle} | ${daysRemaining} days remaining`,
+      };
+    });
+
+    return breakdown;
+  } catch (error) {
+    console.error('Error getting cycles breakdown:', error);
+    return [];
+  }
+};
+
