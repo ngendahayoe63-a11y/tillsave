@@ -13,17 +13,39 @@ export const groupsService = {
   createGroup: async (organizerId: string, name: string, cycleDays: number = 30, groupType: GroupType = 'FULL_PLATFORM') => {
     let joinCode = generateJoinCode();
     let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
 
-    // Keep generating codes until we find a unique one
-    while (!isUnique) {
-      const { data } = await supabase
-        .from('groups')
-        .select('id')
-        .eq('join_code', joinCode)
-        .single();
-      
-      if (!data) isUnique = true;
-      else joinCode = generateJoinCode();
+    // Keep generating codes until we find a unique one (max 10 attempts)
+    while (!isUnique && attempts < maxAttempts) {
+      try {
+        const { data, error } = await supabase
+          .from('groups')
+          .select('id')
+          .eq('join_code', joinCode)
+          .single();
+        
+        // If error is "no rows returned", code is unique
+        if (error?.code === 'PGRST116') {
+          isUnique = true;
+        } else if (!data && !error) {
+          // No data and no error = code is unique
+          isUnique = true;
+        } else if (data) {
+          // Code already exists, generate new one
+          joinCode = generateJoinCode();
+        }
+      } catch (err) {
+        // On any error, assume code is unique and continue
+        // (better to have rare duplicates than block group creation)
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    // If we hit max attempts, just use the current code
+    if (!isUnique) {
+      console.warn('⚠️ Join code uniqueness check failed, using generated code anyway');
     }
 
     // Set current_cycle_start_date to today so payment filtering works correctly from day 1
