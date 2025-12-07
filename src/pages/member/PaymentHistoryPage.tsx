@@ -73,14 +73,14 @@ export const PaymentHistoryPage = () => {
       <main className="p-4 max-w-md mx-auto space-y-4">
         
         {/* Totals Summary */}
-        <Card className="bg-blue-600 text-white border-none shadow-md">
+        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-900 dark:to-blue-800 text-white border-none shadow-md dark:shadow-lg">
           <CardContent className="p-4">
-            <h3 className="text-blue-100 text-sm font-medium mb-2">{t('payments.total_contributed')}</h3>
+            <h3 className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2">{t('payments.total_contributed')}</h3>
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(totals).map(([curr, amount]) => (
                 <div key={curr}>
-                  <p className="text-xs opacity-70">{curr}</p>
-                  <p className="text-2xl font-bold">{amount.toLocaleString()}</p>
+                  <p className="text-xs opacity-70 dark:opacity-60">{curr}</p>
+                  <p className="text-2xl font-bold text-white">{amount.toLocaleString()}</p>
                 </div>
               ))}
               {Object.keys(totals).length === 0 && <p className="opacity-70">0</p>}
@@ -90,7 +90,7 @@ export const PaymentHistoryPage = () => {
 
         {/* Transaction List */}
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Recent Transactions</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Recent Transactions</h3>
           
           {payments.length === 0 ? (
             <EmptyState
@@ -101,10 +101,10 @@ export const PaymentHistoryPage = () => {
             />
           ) : (
             payments.map((payment) => (
-              <Card key={payment.id} className="border-l-4 border-l-green-500 bg-white dark:bg-slate-900 dark:border-gray-800">
+              <Card key={payment.id} className="border-l-4 border-l-green-500 dark:border-l-green-600 bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700">
                 <CardContent className="p-3 flex justify-between items-center">
                   <div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
                       <Calendar className="w-3 h-3" />
                       {format(new Date(payment.payment_date), 'MMM dd, yyyy')}
                     </div>
@@ -118,13 +118,13 @@ export const PaymentHistoryPage = () => {
                         href={payment.receipt_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline flex items-center gap-1 mt-1 transition-colors"
                       >
                         <FileText className="w-3 h-3" /> View Receipt
                       </a>
                     )}
                   </div>
-                  <CheckCircle className="text-green-500 w-5 h-5" />
+                  <CheckCircle className="text-green-500 dark:text-green-400 w-5 h-5 flex-shrink-0" />
                 </CardContent>
               </Card>
             ))
