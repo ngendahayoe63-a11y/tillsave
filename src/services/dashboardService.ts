@@ -261,17 +261,24 @@ export const dashboardService = {
       }
 
       const membershipIds = memberships.map(m => m.id);
-
-      // 2. Get this month's payments - ONLY non-archived (current cycle) payments
       const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // 2. Get current cycle payments - ONLY non-archived (current cycle) payments
+      // Filter by earliest cycle start date across all memberships
+      const cycleDates = memberships
+        .map((m: any) => m.groups?.current_cycle_start_date)
+        .filter(Boolean);
+      
+      const earliestCycleStart = cycleDates.length > 0 
+        ? new Date(Math.min(...cycleDates.map(d => new Date(d).getTime())))
+        : new Date(now.getFullYear(), now.getMonth(), 1);
 
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('id, amount, currency, payment_date, membership_id, recorded_at')
         .in('membership_id', membershipIds)
         .eq('archived', false) // Only show current cycle payments
-        .gte('payment_date', monthStart.toISOString())
+        .gte('payment_date', earliestCycleStart.toISOString())
         .order('payment_date', { ascending: false }); // Newest payments first (reverse chronological)
 
       if (paymentsError) throw paymentsError;
