@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { groupsService } from '@/services/groupsService';
+import { notificationService } from '@/services/notificationService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,6 +44,38 @@ export const GroupDetailsPage = () => {
     };
     loadData();
   }, [groupId, user]);
+
+  // Setup real-time member join notifications
+  useEffect(() => {
+    if (!groupId) return;
+
+    notificationService.subscribeToMemberJoins(groupId, (notification) => {
+      if (notification.type === 'member_joined') {
+        addToast({
+          type: 'success',
+          title: '👋 New Member Joined!',
+          description: `${notification.memberName} just joined your group`,
+          duration: 5000,
+        });
+        
+        // Reload members list
+        const reloadMembers = async () => {
+          try {
+            const updatedMembers = await groupsService.getGroupMembers(groupId);
+            setMembers(updatedMembers);
+          } catch (error) {
+            console.error('Error reloading members:', error);
+          }
+        };
+        reloadMembers();
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      notificationService.unsubscribeAll();
+    };
+  }, [groupId, addToast]);
 
   // Filter Members - exclude organizer from regular members list
   const filteredMembers = members.filter(member => {

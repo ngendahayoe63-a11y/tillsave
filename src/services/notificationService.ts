@@ -2,7 +2,7 @@ import { supabase } from '@/api/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface PaymentNotification {
-  type: 'payment_recorded' | 'cycle_finalized';
+  type: 'payment_recorded' | 'cycle_finalized' | 'member_joined';
   membershipId?: string;
   groupId: string;
   amount?: number;
@@ -139,6 +139,63 @@ class NotificationService {
 
       this.subscriptions.set(channelName, channel);
     });
+  }
+
+  /**
+   * Subscribe to member joins for a specific group
+   * Notifies organizer when new members join their group
+   */
+  subscribeToMemberJoins(groupId: string, callback: NotificationCallback) {
+    const channelName = `member-joins-${groupId}`;
+
+    if (this.subscriptions.has(channelName)) {
+      return;
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'memberships',
+          filter: `group_id=eq.${groupId}`,
+        },
+        async (payload: any) => {
+          // Skip notifications for organizer membership
+          if (payload.new.role === 'ORGANIZER') {
+            return;
+          }
+
+          // Fetch member name for notification
+          try {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name')
+              .eq('id', payload.new.user_id)
+              .single();
+
+            callback({
+              type: 'member_joined',
+              membershipId: payload.new.id,
+              groupId: payload.new.group_id,
+              memberName: userData?.name || 'New Member',
+            });
+          } catch (err) {
+            console.error('Error fetching member name:', err);
+            callback({
+              type: 'member_joined',
+              membershipId: payload.new.id,
+              groupId: payload.new.group_id,
+              memberName: 'New Member',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    this.subscriptions.set(channelName, channel);
   }
 
   /**

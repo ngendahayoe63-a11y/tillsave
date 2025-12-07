@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupCard } from '@/components/groups/GroupCard';
@@ -14,10 +15,12 @@ import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { useOrganizerDashboard } from '@/hooks/useDashboard';
 import { dashboardService } from '@/services/dashboardService';
+import { notificationService } from '@/services/notificationService';
 
 export const OrganizerDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { addToast } = useToast();
   const { data: dashboardData, isLoading, error } = useOrganizerDashboard(user?.id);
   const [searchTerm, setSearchTerm] = useState('');
   const [cycleHistories, setCycleHistories] = useState<Record<string, any[]>>({});
@@ -36,6 +39,31 @@ export const OrganizerDashboard = () => {
       }
     });
   }, [dashboardData?.groups]);
+
+  // Setup real-time member join notifications for all groups
+  useEffect(() => {
+    if (!dashboardData?.groups || dashboardData.groups.length === 0) return;
+
+    const groupIds = dashboardData.groups.map((g: any) => g.id);
+
+    // Subscribe to member joins in each group
+    groupIds.forEach((groupId: string) => {
+      notificationService.subscribeToMemberJoins(groupId, (notification) => {
+        if (notification.type === 'member_joined') {
+          addToast({
+            type: 'success',
+            title: '👋 New Member Joined!',
+            description: `${notification.memberName} joined one of your groups`,
+            duration: 5000,
+          });
+        }
+      });
+    });
+
+    return () => {
+      notificationService.unsubscribeAll();
+    };
+  }, [dashboardData?.groups, addToast]);
 
   // Helper to render currencies
   const renderCurrencyLine = (data: Record<string, number> | undefined) => {
