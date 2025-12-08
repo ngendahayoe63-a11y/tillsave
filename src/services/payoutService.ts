@@ -156,6 +156,17 @@ export const payoutService = {
       const payoutItems: PayoutItem[] = [];
       
       for (const member of members) {
+        // First, debug: check ALL payments for this member (no filters)
+        const { data: allPayments } = await supabase
+          .from('payments')
+          .select('amount, currency, payment_date, archived, status')
+          .eq('membership_id', member.id);
+        
+        console.log(`Member: ${(member.users as any)?.name} - Total payments in DB: ${allPayments?.length || 0}`);
+        if (allPayments && allPayments.length > 0) {
+          console.log(`  - Sample payments:`, allPayments.slice(0, 3).map(p => ({ amount: p.amount, date: p.payment_date, archived: p.archived, status: p.status })));
+        }
+        
         // Get payments for this member in the current cycle
         // Query using consistent ISO timestamp format
         // Filter archived: false to only get current cycle payments
@@ -164,6 +175,7 @@ export const payoutService = {
           .select('amount, currency, payment_date')
           .eq('membership_id', member.id)
           .eq('archived', false)
+          .eq('status', 'CONFIRMED')
           .gte('payment_date', startDateStr)
           .lte('payment_date', endDateStr);
         
