@@ -5,34 +5,54 @@ import { useAuthStore } from '@/store/authStore';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { ToastProvider } from '@/components/ui/toast';
 import { OfflineIndicator } from '@/components/shared/OfflineIndicator';
-import { PinLockScreen } from '@/components/auth/PinLockScreen'; // New Import
+import { PinLockScreen } from '@/components/auth/PinLockScreen';
 import { Loader2 } from 'lucide-react';
 
-// Time in milliseconds before locking (e.g., 60000 = 1 minute)
-const LOCK_TIMEOUT = 60 * 1000; 
+const LOCK_TIMEOUT = 60 * 1000;
+const PIN_LOCK_KEY = 'tillsave-pin-locked';
 
 function App() {
   const { initializeAuth, isLoading, user, isAuthenticated } = useAuthStore();
   const [isLocked, setIsLocked] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const backgroundTimeRef = useRef<number | null>(null);
 
-  // 1. Init Auth
+  // 1. Init Auth on mount (runs once)
   useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+    const init = async () => {
+      await initializeAuth();
+      setInitialized(true);
+    };
+    init();
+  }, []);
 
-  // 2. Handle Visibility Change (Background/Foreground)
+  // 2. Check PIN lock status after auth initialization
+  useEffect(() => {
+    if (!initialized || isLoading) return;
+
+    // Only check PIN lock once after auth is loaded
+    if (isAuthenticated && user?.pin_hash) {
+      const wasLocked = sessionStorage.getItem(PIN_LOCK_KEY) === 'true';
+      if (wasLocked) {
+        setIsLocked(true);
+        sessionStorage.removeItem(PIN_LOCK_KEY);
+      }
+    }
+  }, [initialized, isLoading]);
+
+  // 3. Handle Visibility Change (Background/Foreground)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // App went to background, save time
+        // App went to background
         backgroundTimeRef.current = Date.now();
+        if (isAuthenticated && user?.pin_hash) {
+          sessionStorage.setItem(PIN_LOCK_KEY, 'true');
+        }
       } else {
         // App came to foreground
         if (backgroundTimeRef.current && isAuthenticated && user?.pin_hash) {
           const timeGone = Date.now() - backgroundTimeRef.current;
-          
-          // If gone longer than timeout, LOCK IT
           if (timeGone > LOCK_TIMEOUT) {
             setIsLocked(true);
           }
@@ -41,8 +61,8 @@ function App() {
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isAuthenticated, user]);
 
   if (isLoading) {
@@ -58,7 +78,10 @@ function App() {
       <ToastProvider>
         <OfflineIndicator />
         {isLocked && isAuthenticated ? (
-          <PinLockScreen onUnlock={() => setIsLocked(false)} />
+          <PinLockScreen onUnlock={() => {
+            setIsLocked(false);
+            sessionStorage.removeItem(PIN_LOCK_KEY);
+          }} />
         ) : (
           <RouterProvider router={router} />
         )}

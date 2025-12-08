@@ -2,22 +2,29 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { organizerOnlyService } from '@/services/organizerOnlyService';
+import { organizerOnlyCycleService } from '@/services/organizerOnlyCycleService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Loader2, Plus, MessageSquare, Edit2, Trash2, X, Phone, Users, Eye } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Edit2, Trash2, X, Phone, Users, Eye, RotateCcw, FileText } from 'lucide-react';
 import { OrganizerOnlyMember } from '@/types';
+import { OrganizerPayoutDashboard } from '@/components/organizer/OrganizerPayoutDashboard';
+import { MemberStatisticsCard } from '@/components/organizer/MemberStatisticsCard';
+import { PaymentAnalytics } from '@/components/organizer/PaymentAnalytics';
+import { OrganizerOnlyReport } from '@/components/organizer/OrganizerOnlyReport';
+import { OrganizerOnlyEndCycleModal } from '@/components/modals/OrganizerOnlyEndCycleModal';
 
 interface OrganizerOnlyGroupDetailsProps {
   groupId: string;
   group: any;
 }
 
-export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroupDetailsProps) => {
+export const OrganizerOnlyGroupDetails = ({ groupId, group: initialGroup }: OrganizerOnlyGroupDetailsProps) => {
   const { addToast } = useToast();
   const { user } = useAuthStore();
 
+  const [group, setGroup] = useState<any>(initialGroup);
   const [members, setMembers] = useState<OrganizerOnlyMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,10 +46,24 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
     notes: ''
   });
 
+  const [showReport, setShowReport] = useState(false);
+  const [isCycleLoading, setIsCycleLoading] = useState(false);
+  const [showEndCycleConfirm, setShowEndCycleConfirm] = useState(false);
+
   // Load members
   useEffect(() => {
     loadMembers();
   }, [groupId]);
+
+  const loadGroupData = async () => {
+    try {
+      const { groupsService } = await import('@/services/groupsService');
+      const data = await groupsService.getGroupDetails(groupId);
+      setGroup(data);
+    } catch (err) {
+      console.error('Error loading group:', err);
+    }
+  };
 
   const loadMembers = async () => {
     try {
@@ -175,6 +196,40 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
     }
   };
 
+  const handleEndCycle = async () => {
+    setShowEndCycleConfirm(true);
+  };
+
+  const handleConfirmEndCycle = async () => {
+    try {
+      setIsCycleLoading(true);
+      await organizerOnlyCycleService.endCycle(groupId);
+      
+      // Reload group data to get new cycle number and dates
+      await loadGroupData();
+      
+      // Reload members to show new cycle data
+      await loadMembers();
+      
+      addToast({
+        type: 'success',
+        title: 'Cycle ended successfully',
+        description: 'A new cycle has started. View the report for details.',
+      });
+      // Hide the confirmation dialog and show report
+      setShowEndCycleConfirm(false);
+      setShowReport(true);
+    } catch (error: any) {
+      addToast({
+        type: 'error',
+        title: 'Failed to end cycle',
+        description: error.message,
+      });
+    } finally {
+      setIsCycleLoading(false);
+    }
+  };
+
   const filteredMembers = members.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.phone_number.includes(searchTerm)
@@ -189,7 +244,15 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Payout Dashboard */}
+      <OrganizerPayoutDashboard groupId={groupId} />
+
+      {/* Payment Analytics */}
+      <PaymentAnalytics groupId={groupId} />
+
+      {/* Members Section */}
+      <div className="space-y-4">
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-3">
         <Card>
@@ -224,6 +287,29 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => setShowReport(true)}
+          title="View cycle report"
+          className="bg-purple-50 hover:bg-purple-100 border-purple-200"
+        >
+          <FileText className="h-4 w-4 text-purple-600" />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={handleEndCycle}
+          disabled={isCycleLoading}
+          title="End cycle and pay members"
+          className="bg-green-50 hover:bg-green-100 border-green-200"
+        >
+          {isCycleLoading ? (
+            <Loader2 className="h-4 w-4 text-green-600 animate-spin" />
+          ) : (
+            <RotateCcw className="h-4 w-4 text-green-600" />
+          )}
         </Button>
       </div>
 
@@ -314,6 +400,13 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
                         {member.notes}
                       </p>
                     )}
+                    {/* Member Statistics */}
+                    <div className="mt-3">
+                      <MemberStatisticsCard 
+                        groupId={groupId}
+                        memberId={member.id}
+                      />
+                    </div>
                   </div>
 
                   {/* Actions */}
@@ -508,6 +601,26 @@ export const OrganizerOnlyGroupDetails = ({ groupId, group }: OrganizerOnlyGroup
           </Card>
         </div>
       )}
+
+      {/* Report Modal */}
+      {showReport && (
+        <OrganizerOnlyReport
+          groupId={groupId}
+          groupName={group.name}
+          onClose={() => setShowReport(false)}
+          onMembersUpdated={loadMembers}
+        />
+      )}
+
+      {/* End Cycle Modal with Preview */}
+      <OrganizerOnlyEndCycleModal
+        isOpen={showEndCycleConfirm}
+        groupId={groupId}
+        isLoading={isCycleLoading}
+        onConfirm={handleConfirmEndCycle}
+        onCancel={() => setShowEndCycleConfirm(false)}
+      />
+      </div>
     </div>
   );
 };

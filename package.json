@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && powershell -File deploy.ps1 -Message \"Build and deploy\"",
+    "deploy:fix": "npm run build && powershell -File deploy.ps1 -Message \"Bug fix and improvements\""
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "^5.2.8",

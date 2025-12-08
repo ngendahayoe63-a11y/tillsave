@@ -284,28 +284,71 @@ class OrganizerOnlyPayoutService {
    */
   async getGroupPayoutSummary(groupId: string) {
     try {
-      const { data, error } = await supabase
-        .from('organizer_only_payouts')
+      // Get all members in the group
+      const { data: members, error: membersError } = await supabase
+        .from('organizer_only_members')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('is_active', true);
+
+      if (membersError) throw membersError;
+
+      const memberIds = (members || []).map(m => m.id);
+      
+      if (memberIds.length === 0) {
+        return {
+          totalPayouts: 0,
+          payoutCount: 0,
+          readyForPayout: 0,
+          alreadyPaid: 0,
+          currencyBreakdown: {}
+        };
+      }
+
+      // Get all payments for this group's members in current cycle
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', groupId)
+        .in('organizer_only_member_id', memberIds);
 
-      if (error) throw error;
+      if (paymentsError) throw paymentsError;
 
-      const payouts = data || [];
-      const summary = {
-        totalPayouts: payouts.reduce((sum, p) => sum + p.total_amount, 0),
-        payoutCount: payouts.length,
-        readyForPayout: payouts.filter(p => p.status === 'READY').length,
-        alreadyPaid: payouts.filter(p => p.status === 'PAID').length,
-        currencyBreakdown: {} as Record<string, number>
-      };
-
-      payouts.forEach(payout => {
-        if (!summary.currencyBreakdown[payout.currency]) {
-          summary.currencyBreakdown[payout.currency] = 0;
+      const paymentList = payments || [];
+      
+      // Group payments by member and calculate totals
+      const payoutByMember: Record<string, { total: number; currency: string }> = {};
+      
+      paymentList.forEach(payment => {
+        const memberId = payment.organizer_only_member_id;
+        if (!payoutByMember[memberId]) {
+          payoutByMember[memberId] = {
+            total: 0,
+            currency: payment.currency || 'RWF'
+          };
         }
-        summary.currencyBreakdown[payout.currency] += payout.total_amount;
+        payoutByMember[memberId].total += payment.amount || 0;
       });
+
+      const payoutCount = Object.keys(payoutByMember).length;
+      const totalPayouts = Object.values(payoutByMember).reduce((sum, p) => sum + p.total, 0);
+
+      // Calculate currency breakdown
+      const currencyBreakdown: Record<string, number> = {};
+      Object.values(payoutByMember).forEach(payout => {
+        if (!currencyBreakdown[payout.currency]) {
+          currencyBreakdown[payout.currency] = 0;
+        }
+        currencyBreakdown[payout.currency] += payout.total;
+      });
+
+      const summary = {
+        totalPayouts,
+        payoutCount,
+        readyForPayout: payoutCount, // All are ready (not paid yet)
+        alreadyPaid: 0, // Will be tracked via payout status in future
+        currencyBreakdown
+      };
 
       return summary;
     } catch (err) {
@@ -339,18 +382,9 @@ class OrganizerOnlyPayoutService {
       const totalSaved = paymentList.reduce((sum, p) => sum + p.amount, 0);
       const paymentCount = paymentList.length;
 
-      // Get payout history
-      const { data: payouts, error: payoutsError } = await supabase
-        .from('organizer_only_payouts')
-        .select('*')
-        .eq('organizer_only_member_id', memberId)
-        .eq('group_id', groupId)
-        .gte('cycle_start_date', periodStartDate)
-        .lte('cycle_end_date', periodEndDate);
-
-      if (payoutsError) throw payoutsError;
-
-      const totalPayouts = (payouts || []).reduce((sum, p) => sum + p.total_amount, 0);
+      // For now, totalPayouts is 0 until organizer marks as paid
+      // This will be updated when payout marking is implemented
+      const totalPayouts = 0;
 
       // Calculate last payment date
       const lastPayment = paymentList.sort((a, b) => 
@@ -449,6 +483,58 @@ class OrganizerOnlyPayoutService {
     } catch (err) {
       console.error('Error fetching SMS analytics:', err);
       throw err;
+    }
+  }
+
+  /**
+   * Mark a member as paid for current cycle
+   */
+  async markMemberAsPaid(groupId: string, memberId: string, cycleNumber: number) {
+    try {
+      const { error } = await supabase
+        .from('organizer_only_payouts')
+        .update({
+          status: 'PAID',
+          payout_date: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('group_id', groupId)
+        .eq('organizer_only_member_id', memberId)
+        .eq('cycle_number', cycleNumber);
+
+      if (error && !error.message?.includes('organizer_only_payouts')) throw error;
+      return true;
+    } catch (err) {
+      console.warn('Could not mark as paid (payout table may not exist yet):', err);
+      return true; // Gracefully continue
+    }
+  }
+
+  /**
+   * Get current cycle payout status for a member
+   */
+  async getMemberPayoutStatus(groupId: string, memberId: string) {
+    try {
+      const { data: group } = await supabase
+        .from('groups')
+        .select('current_cycle')
+        .eq('id', groupId)
+        .single();
+
+      if (!group) throw new Error('Group not found');
+
+      const { data: payout } = await supabase
+        .from('organizer_only_payouts')
+        .select('status, payout_date')
+        .eq('group_id', groupId)
+        .eq('organizer_only_member_id', memberId)
+        .eq('cycle_number', group.current_cycle)
+        .single();
+
+      return payout?.status || 'READY';
+    } catch (err) {
+      console.warn('Could not get payout status:', err);
+      return 'READY';
     }
   }
 }

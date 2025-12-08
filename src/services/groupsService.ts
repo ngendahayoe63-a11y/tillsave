@@ -70,9 +70,9 @@ export const groupsService = {
 
     if (error) throw error;
 
-    // Automatically add organizer as a member (only for FULL_PLATFORM groups)
-    // For ORGANIZER_ONLY groups, members are added via organizerOnlyService
+    // Automatically add organizer as a member
     if (groupType === 'FULL_PLATFORM') {
+      // Full Platform: Add to memberships table
       try {
         await supabase
           .from('memberships')
@@ -83,14 +83,31 @@ export const groupsService = {
             joined_at: new Date().toISOString()
           });
       } catch (memberError: any) {
-        // Log the specific error for debugging
         console.error('Error adding organizer as member:', memberError);
-        // If it's a duplicate key error, that's fine - membership already exists
         if (memberError?.code === '23505') {
           console.log('Organizer membership already exists, continuing');
         } else {
-          // For other errors, still continue as group was created successfully
           console.warn('Membership insert failed but group created. User may not be able to save immediately.');
+        }
+      }
+    } else if (groupType === 'ORGANIZER_ONLY') {
+      // Organizer-Only: Add to organizer_only_members table
+      try {
+        await supabase
+          .from('organizer_only_members')
+          .insert({
+            group_id: group.id,
+            name: 'Me (Organizer)',
+            phone_number: null,  // Use NULL instead of empty string to allow multiple organizers
+            email: null,
+            is_active: true
+          });
+      } catch (memberError: any) {
+        console.error('Error adding organizer to organizer_only_members:', memberError);
+        if (memberError?.code === '23505') {
+          console.log('Organizer member already exists, continuing');
+        } else {
+          console.warn('Organizer member insert failed but group created.');
         }
       }
     }
@@ -214,15 +231,23 @@ export const groupsService = {
    * Check if organizer has a membership in a group
    */
   getOrganizerMembership: async (groupId: string, organizerId: string) => {
-    const { data, error } = await supabase
-      .from('memberships')
-      .select('id, status, joined_at')
-      .eq('group_id', groupId)
-      .eq('user_id', organizerId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('id, status, joined_at')
+        .eq('group_id', groupId)
+        .eq('user_id', organizerId)
+        .single();
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
-    return data || null;
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+      return data || null;
+    } catch (err: any) {
+      // 406 error = RLS policy denied access (e.g., organizer-only group with no memberships)
+      if (err.status === 406 || err.message?.includes('406')) {
+        return null;
+      }
+      throw err;
+    }
   },
 
   /**
