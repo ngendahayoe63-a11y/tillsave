@@ -114,6 +114,16 @@ class OrganizerOnlyPayoutService {
     payouts: PayoutCalculation[]
   ): Promise<string[]> {
     try {
+      // Get current cycle number
+      const { data: groupData, error: groupError } = await supabase
+        .from('groups')
+        .select('current_cycle')
+        .eq('id', groupId)
+        .single();
+
+      if (groupError) throw groupError;
+      const cycleNumber = groupData?.current_cycle || 1;
+
       const payoutIds: string[] = [];
 
       for (const payout of payouts) {
@@ -122,6 +132,7 @@ class OrganizerOnlyPayoutService {
           .insert({
             group_id: groupId,
             organizer_only_member_id: payout.memberId,
+            cycle_number: cycleNumber,
             cycle_start_date: cycleStartDate,
             cycle_end_date: cycleEndDate,
             total_amount: payout.totalAmount,

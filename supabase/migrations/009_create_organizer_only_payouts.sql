@@ -22,9 +22,12 @@ CREATE TABLE organizer_only_payouts (
   cycle_end_date TIMESTAMP WITH TIME ZONE NOT NULL,
   total_amount DECIMAL(15, 2) NOT NULL,
   payment_count INT DEFAULT 0,
+  average_payment DECIMAL(15, 2),
   currency VARCHAR(3) NOT NULL DEFAULT 'RWF',
   status VARCHAR(20) DEFAULT 'READY',
   payout_date TIMESTAMP WITH TIME ZONE,
+  payment_method VARCHAR(20),
+  notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   
