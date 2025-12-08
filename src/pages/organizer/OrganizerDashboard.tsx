@@ -366,8 +366,15 @@ export const OrganizerDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {(showAllActivities ? [...dashboardData.recentPayments].reverse() : [...dashboardData.recentPayments].reverse().slice(0, 5)).map((payment: any, idx: number) => {
-                    // Safely access nested user data
-                    const memberName = payment.memberships?.users?.name || 'Unknown Member';
+                    // Handle both Full Platform (memberships) and Organizer-Only (organizer_only_members)
+                    let memberName = 'Unknown Member';
+                    
+                    if (payment.membership_id && payment.memberships?.users?.name) {
+                      memberName = payment.memberships.users.name;
+                    } else if (payment.organizer_only_member_id && payment.organizer_only_members?.name) {
+                      memberName = payment.organizer_only_members.name;
+                    }
+                    
                     const amount = payment.amount || 0;
                     const currency = payment.currency || 'RWF';
                     const paymentDate = payment.payment_date || new Date().toISOString();
