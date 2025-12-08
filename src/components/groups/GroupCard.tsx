@@ -17,6 +17,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({ group, role }) => {
   const { t } = useTranslation();
   const { addToast } = useToast();
 
+  console.log(`📌 GroupCard rendered:`, { name: group.name, group_type: group.group_type, id: group.id });
+
   const copyCode = () => {
     navigator.clipboard.writeText(group.join_code);
     addToast({
