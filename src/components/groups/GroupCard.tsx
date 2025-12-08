@@ -37,8 +37,19 @@ export const GroupCard: React.FC<GroupCardProps> = ({ group, role }) => {
   return (
     <Card className="mb-4 shadow-sm border-l-4 border-l-primary bg-card text-card-foreground dark:border-l-primary dark:bg-slate-900 dark:border-gray-800">
       <CardHeader className="pb-2 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">{group.name}</CardTitle>
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex-1">
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">{group.name}</CardTitle>
+            <div className="mt-2 flex gap-2">
+              <span className={`text-xs px-2 py-1 rounded-full font-mono ${
+                group.group_type === 'ORGANIZER_ONLY'
+                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                  : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              }`}>
+                {group.group_type === 'ORGANIZER_ONLY' ? '💰 Organizer-Only' : '🌐 Full Platform'}
+              </span>
+            </div>
+          </div>
           <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full font-mono">
             {t('groups.cycle')} {group.current_cycle}
           </span>

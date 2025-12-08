@@ -40,6 +40,17 @@ export const CyclePayoutPage = () => {
       setGroupName(group.name);
       setGroupData(group);
 
+      // Redirect Organizer-Only groups to their group details page
+      if (group.group_type === 'ORGANIZER_ONLY') {
+        addToast({
+          type: 'info',
+          title: 'Organizer-Only Group',
+          description: 'Use the group details page to manage this organizer-only group.',
+        });
+        navigate(`/organizer/group/${groupId}`, { replace: true });
+        return;
+      }
+
       // Fetch organizer details
       const orgDetails = await payoutService.getOrganizerDetails(currentUser.id);
       setOrganizerDetails(orgDetails);
