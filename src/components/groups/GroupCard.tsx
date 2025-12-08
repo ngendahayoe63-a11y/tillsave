@@ -91,12 +91,20 @@ export const GroupCard: React.FC<GroupCardProps> = ({ group, role }) => {
                 <BarChart3 className="w-4 h-4 mr-1" /> Insights
               </Button>
             </Link>
-            {/* END CYCLE BUTTON */}
-            <Link to={`/organizer/group/${group.id}/payout-cycle`} className="col-span-2">
-              <Button className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-200">
-                <DollarSign className="w-4 h-4 mr-1" /> End Cycle & Payout
-              </Button>
-            </Link>
+            {/* END CYCLE BUTTON - Different routes for Full Platform vs Organizer-Only */}
+            {group.group_type === 'ORGANIZER_ONLY' ? (
+              <Link to={`/organizer/group/${group.id}/payout-cycle-organizer`} className="col-span-2">
+                <Button className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-200">
+                  <DollarSign className="w-4 h-4 mr-1" /> End Cycle & Payout
+                </Button>
+              </Link>
+            ) : (
+              <Link to={`/organizer/group/${group.id}/payout-cycle`} className="col-span-2">
+                <Button className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-200">
+                  <DollarSign className="w-4 h-4 mr-1" /> End Cycle & Payout
+                </Button>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 w-full">

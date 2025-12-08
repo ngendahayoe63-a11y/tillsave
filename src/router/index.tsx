@@ -15,6 +15,7 @@ import { MemberLedgerPage } from '@/pages/organizer/MemberLedgerPage';
 import { EditPaymentPage } from '@/pages/organizer/EditPaymentPage';
 import { PayoutSummaryPage } from '@/pages/organizer/PayoutSummaryPage';
 import { CyclePayoutPage } from '@/pages/organizer/CyclePayoutPage';
+import { OrganizerOnlyCyclePayoutPage } from '@/pages/organizer/OrganizerOnlyCyclePayoutPage';
 import { AdvancedReportPage } from '@/pages/organizer/AdvancedReportPage';
 import { GlobalReportPage } from '@/pages/organizer/GlobalReportPage';
 import { MemberDashboard } from '@/pages/member/MemberDashboard';
@@ -96,7 +97,8 @@ export const router = createBrowserRouter([
               { path: 'group/:groupId/edit-payment/:paymentId', element: <EditPaymentPage /> },
               { path: 'group/:groupId/report', element: <PayoutSummaryPage /> },
               { path: 'group/:groupId/analytics', element: <AdvancedReportPage /> },
-              { path: 'group/:groupId/payout-cycle', element: <CyclePayoutPage /> }
+              { path: 'group/:groupId/payout-cycle', element: <CyclePayoutPage /> },
+              { path: 'group/:groupId/payout-cycle-organizer', element: <OrganizerOnlyCyclePayoutPage /> }
             ]
           },
           {
