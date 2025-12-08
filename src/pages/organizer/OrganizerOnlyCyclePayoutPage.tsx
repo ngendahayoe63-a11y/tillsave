@@ -35,6 +35,8 @@ export const OrganizerOnlyCyclePayoutPage = () => {
     setIsLoading(true);
     try {
       const group = await groupsService.getGroupDetails(groupId);
+      console.log('🔍 OrganizerOnlyCyclePayoutPage - Group loaded:', { name: group.name, type: group.group_type, id: group.id });
+      
       setGroupName(group.name);
       setGroupData(group);
 
@@ -43,12 +45,16 @@ export const OrganizerOnlyCyclePayoutPage = () => {
       const cycleEnd = new Date(cycleStart);
       cycleEnd.setDate(cycleEnd.getDate() + group.cycle_days);
 
+      console.log('📅 Cycle dates:', { start: cycleStart.toISOString(), end: cycleEnd.toISOString() });
+
       // Calculate payouts for Organizer-Only group
       const payouts = await organizerOnlyPayoutService.calculateCyclePayouts(
         groupId,
         cycleStart.toISOString().split('T')[0],
         cycleEnd.toISOString().split('T')[0]
       );
+
+      console.log('💰 Payouts calculated:', payouts.length, 'members');
 
       // Transform payouts to match UI format
       const items = payouts.map(payout => ({

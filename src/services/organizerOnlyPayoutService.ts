@@ -45,6 +45,8 @@ class OrganizerOnlyPayoutService {
     minimumPayments: number = 1
   ): Promise<PayoutCalculation[]> {
     try {
+      console.log(`🔍 Organizer-Only Payout Calculation:`, { groupId, cycleStartDate, cycleEndDate });
+      
       // Get all active members
       const { data: members, error: membersError } = await supabase
         .from('organizer_only_members')
@@ -53,6 +55,8 @@ class OrganizerOnlyPayoutService {
         .eq('is_active', true);
 
       if (membersError) throw membersError;
+
+      console.log(`   Found ${members?.length || 0} active members`);
 
       const payouts: PayoutCalculation[] = [];
 
@@ -71,6 +75,8 @@ class OrganizerOnlyPayoutService {
 
         const paymentList = payments || [];
         const paymentCount = paymentList.length;
+        
+        console.log(`   ${member.name}: ${paymentCount} payments, total: ${paymentList.reduce((s, p) => s + p.amount, 0)}`);
 
         if (paymentCount >= minimumPayments) {
           const totalAmount = paymentList.reduce((sum, p) => sum + p.amount, 0);

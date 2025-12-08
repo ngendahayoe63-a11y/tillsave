@@ -37,8 +37,22 @@ export const CyclePayoutPage = () => {
     setIsLoading(true);
     try {
       const group = await groupsService.getGroupDetails(groupId);
+      console.log('🔍 CyclePayoutPage - Group loaded:', { name: group.name, type: group.group_type, id: group.id });
+      
       setGroupName(group.name);
       setGroupData(group);
+
+      // Check if this is an Organizer-Only group - if so, this is wrong page!
+      if (group.group_type === 'ORGANIZER_ONLY') {
+        console.warn('❌ ORGANIZER_ONLY group loaded on Full Platform page! Redirecting...');
+        addToast({
+          type: 'warning',
+          title: 'Wrong Page',
+          description: 'This is an Organizer-Only group. Redirecting to the correct page...',
+        });
+        navigate(`/organizer/group/${groupId}/payout-cycle-organizer`, { replace: true });
+        return;
+      }
 
       // Fetch organizer details
       const orgDetails = await payoutService.getOrganizerDetails(currentUser.id);
