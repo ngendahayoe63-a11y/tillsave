@@ -762,7 +762,7 @@ export const getOrganizerEarningsBreakdown = async (organizerId: string) => {
   try {
     const { data: groups } = await supabase
       .from('groups')
-      .select('id, name, current_cycle')
+      .select('id, name, current_cycle, group_type')
       .eq('organizer_id', organizerId)
       .eq('status', 'ACTIVE');
 
@@ -770,20 +770,41 @@ export const getOrganizerEarningsBreakdown = async (organizerId: string) => {
 
     const breakdown = await Promise.all(
       groups.map(async (group: any) => {
-        // Get all payouts for this group
-        const { data: payouts } = await supabase
-          .from('payout_items')
-          .select('organizer_fee, currency, payouts(cycle_number)')
-          .in('payout_id', 
-            (await supabase
-              .from('payouts')
-              .select('id')
-              .eq('group_id', group.id)).data?.map((p: any) => p.id) || []
-          );
+        let totalEarnings = 0;
+        let currency = 'RWF';
+        let lastCycle = group.current_cycle;
 
-        const totalEarnings = payouts?.reduce((sum, item: any) => sum + (item.organizer_fee || 0), 0) || 0;
-        const currency = payouts?.[0]?.currency || 'RWF';
-        const lastCycle = payouts?.[0]?.payouts?.[0]?.cycle_number || group.current_cycle;
+        if (group.group_type === 'ORGANIZER_ONLY') {
+          // For Organizer-Only groups, get earnings from organizer_only_payouts
+          const { data: payouts } = await supabase
+            .from('organizer_only_payouts')
+            .select('total_amount, payment_count, status')
+            .eq('group_id', group.id)
+            .order('cycle_number', { ascending: false });
+
+          if (payouts && payouts.length > 0) {
+            // Calculate organizer fee (1 day worth) from latest cycle
+            const latestPayout = payouts[0];
+            const dailyRate = latestPayout.total_amount / (latestPayout.payment_count || 1);
+            totalEarnings = dailyRate;
+            currency = 'RWF';
+          }
+        } else {
+          // For Full Platform groups, get earnings from payout_items
+          const { data: payouts } = await supabase
+            .from('payout_items')
+            .select('organizer_fee, currency, payouts(cycle_number)')
+            .in('payout_id', 
+              (await supabase
+                .from('payouts')
+                .select('id')
+                .eq('group_id', group.id)).data?.map((p: any) => p.id) || []
+            );
+
+          totalEarnings = payouts?.reduce((sum, item: any) => sum + (item.organizer_fee || 0), 0) || 0;
+          currency = payouts?.[0]?.currency || 'RWF';
+          lastCycle = payouts?.[0]?.payouts?.[0]?.cycle_number || group.current_cycle;
+        }
 
         return {
           groupId: group.id,
